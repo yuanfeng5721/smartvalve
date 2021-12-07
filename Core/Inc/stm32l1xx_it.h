@@ -77,5 +77,3 @@ void UART5_IRQHandler(void);
 #endif
 
 #endif /* __STM32L1xx_IT_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -241,6 +241,8 @@ static void ml302_set_event_cb(at_socket_evt_t event, at_evt_cb_t cb)
 
 static int ml302_power(bool status)
 {
+	Log_d("ml302_power: %d", status);
+
 	if(status)
 	{
 		modem_power(true);
@@ -264,7 +266,7 @@ static int ml302_power(bool status)
 static int ml302_reset(void)
 {
 	modem_reset();
-	at_delayms(1000);
+	at_delayms(200);
 	if(at_obj_wait_connect(ML302_WAIT_CONNECT_TIME))
 	{
 		Log_e("ml302 reset error!");

@@ -16,6 +16,7 @@
   *
   ******************************************************************************
   */
+#include "iwdg.h"
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -29,6 +30,7 @@
 #define LOG_TAG "freertos"
 #include "log.h"
 #include "at_device.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +50,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+osThreadId modemTaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -103,6 +105,12 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
   *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
   /* place for user code */
 }
+
+void StartModemTask(void const * argument)
+{
+	modem_init();
+}
+
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
@@ -133,11 +141,12 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+  osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 256);
+  modemTaskHandle = osThreadCreate(osThread(modemTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -152,12 +161,12 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  modem_init();
+  // modem_init();
   /* Infinite loop */
   for(;;)
   {
-	LOGI("hello, world!!!\r\n");
     osDelay(2000);
+    HAL_IWDG_Refresh(&hiwdg);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -167,4 +176,3 @@ void StartDefaultTask(void const * argument)
 
 /* USER CODE END Application */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

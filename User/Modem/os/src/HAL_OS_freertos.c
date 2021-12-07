@@ -19,6 +19,7 @@
 //#include "freertos/semphr.h"
 //#include "freertos/task.h"
 #include "iot_import.h"
+#include "usart.h"
 
 #define PLATFORM_HAS_CMSIS
 
@@ -46,13 +47,25 @@ void HAL_SleepMs(_IN_ uint32_t ms)
 void HAL_Printf(_IN_ const char *fmt, ...)
 {
 #if 1
+	static char buff[256];
 	va_list list;
-	char buf[256]={0};
+	int length;
 	
 	va_start(list, fmt);
-	vsnprintf(buf,sizeof(buf), fmt, list);
+	length = vsnprintf(buff, sizeof(buff), fmt, list);
 	va_end(list);
-	printf("%s", buf);
+
+	if (length < sizeof(buff)) {
+		buff[length] = '\n';
+		length++;
+	}
+
+#if 1
+	HAL_UART_Transmit(&huart5, buff, length, length * 10);
+#else
+	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
+	HAL_UART_Transmit(&huart4, buff, length, length * 10);
+#endif
 #else
 	printf(fmt, ##);
 #endif

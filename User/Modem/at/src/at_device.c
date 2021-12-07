@@ -29,17 +29,17 @@
 
 uint8_t device_has_initialled = 0;
 
+extern int at_device_sim7070_init(void);
+extern int at_device_ml302_init(void);
 
 /*at device driver must realize this api which called by HAL_AT_TCP_Init*/
 int at_device_init(void)
 {
 #ifdef AT_DEVICE_SIM7070
-	extern int at_device_sim7070_init(void);
     return at_device_sim7070_init();
 #endif
 
 #ifdef AT_DEVICE_ML302
-    extern int at_device_ml302_init(void);
     return at_device_ml302_init();
 #endif
 }
