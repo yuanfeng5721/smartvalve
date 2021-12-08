@@ -278,7 +278,7 @@ static int ml302_reset(void)
 
 static int ml302_init(void)
 {
-#define INIT_RETRY                     10
+#define INIT_RETRY                     3
 #define CPIN_RETRY                     5
 #define CSQ_RETRY                      50
 #define CREG_RETRY                     10

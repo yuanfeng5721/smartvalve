@@ -32,7 +32,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

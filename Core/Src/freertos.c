@@ -51,6 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 osThreadId modemTaskHandle;
+osThreadId bleTaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -111,6 +112,59 @@ void StartModemTask(void const * argument)
 	modem_init();
 }
 
+u16 CavanUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
+{
+	u8 *buff_bak, *buff_end;
+	u32 ticks;
+
+	/* Check that a Rx process is not already ongoing */
+	if (huart->RxState != HAL_UART_STATE_READY) {
+		return 0;
+	}
+
+	/* Process Locked */
+	__HAL_LOCK(huart);
+
+	huart->ErrorCode = HAL_UART_ERROR_NONE;
+	huart->RxState = HAL_UART_STATE_BUSY_RX;
+	huart->ReceptionType = HAL_UART_RECEPTION_STANDARD;
+
+	huart->RxXferSize = size;
+	huart->RxXferCount = size;
+
+	/* Process Unlocked */
+	__HAL_UNLOCK(huart);
+
+	buff_bak = buff;
+	buff_end = buff + size;
+	ticks = HAL_GetTick() + timeout;
+
+	while (buff < buff_end) {
+		if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) != 0) {
+			ticks = HAL_GetTick() + timeout;
+			*buff++ = huart->Instance->DR;
+		} else if (buff == buff_bak || ticks > HAL_GetTick()) {
+			osThreadYield();
+		} else {
+			break;
+		}
+	}
+
+	return buff - buff_bak;
+}
+
+void StartBleTask(void const * argument)
+{
+	u8 buff[512];
+
+	while (1) {
+		u16 length = CavanUartRead(&huart2, buff, sizeof(buff), 20);
+		if (length > 0) {
+			HAL_UART_Transmit(&huart2, buff, length, length * 10);
+		}
+	}
+}
+
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
@@ -147,6 +201,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 256);
   modemTaskHandle = osThreadCreate(osThread(modemTask), NULL);
+
+  osThreadDef(bleTask, StartBleTask, osPriorityNormal, 0, 256);
+  bleTaskHandle = osThreadCreate(osThread(bleTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
