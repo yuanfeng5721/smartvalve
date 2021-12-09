@@ -52,6 +52,7 @@
 /* USER CODE BEGIN Variables */
 osThreadId modemTaskHandle;
 osThreadId bleTaskHandle;
+osThreadId rs485TaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -150,6 +151,8 @@ u16 CavanUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
 		}
 	}
 
+    huart->RxState = HAL_UART_STATE_READY;
+
 	return buff - buff_bak;
 }
 
@@ -161,6 +164,22 @@ void StartBleTask(void const * argument)
 		u16 length = CavanUartRead(&huart2, buff, sizeof(buff), 20);
 		if (length > 0) {
 			HAL_UART_Transmit(&huart2, buff, length, length * 10);
+		}
+	}
+}
+
+void StartRs485Task(void const * argument)
+{
+	u8 buff[512];
+
+	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
+
+	while (1) {
+		u16 length = CavanUartRead(&huart4, buff, sizeof(buff), 20);
+		if (length > 0) {
+			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
+			HAL_UART_Transmit(&huart4, buff, length, length * 10);
+			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
 		}
 	}
 }
@@ -204,6 +223,9 @@ void MX_FREERTOS_Init(void) {
 
   osThreadDef(bleTask, StartBleTask, osPriorityNormal, 0, 256);
   bleTaskHandle = osThreadCreate(osThread(bleTask), NULL);
+
+  osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
+  rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }
