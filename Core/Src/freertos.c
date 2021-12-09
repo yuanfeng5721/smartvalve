@@ -111,6 +111,10 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
 void StartModemTask(void const * argument)
 {
 	modem_init();
+
+	while (1) {
+		osDelay(2000);
+	}
 }
 
 u16 CavanUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)

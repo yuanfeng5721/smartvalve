@@ -276,6 +276,86 @@ static int ml302_reset(void)
 	return QCLOUD_RET_SUCCESS;
 }
 
+bool cavan_send_VERCTRL(at_response_t rsp, u8 times)
+{
+	while (times > 0) {
+		at_exec_cmd(rsp, "AT+VERCTRL=0,1");
+
+		if (at_resp_get_line_by_kw(rsp, "OK")) {
+			Log_d("%s auto active success.", DEVICE_NAME);
+			return true;
+		}
+
+		Log_i("\"AT+VERCTRL\" commands send retry...");
+		at_delayms(1000);
+		times--;
+	}
+
+	return false;
+}
+
+bool cavan_send_CPIN(at_response_t rsp, u8 times)
+{
+	while (times > 0) {
+		at_exec_cmd(rsp, "AT+CPIN?");
+
+		if (at_resp_get_line_by_kw(rsp, "READY")) {
+			Log_d("%s device SIM card detection success.", DEVICE_NAME);
+			return true;
+		}
+
+		Log_i("\"AT+CPIN\" commands send retry...");
+		at_delayms(1000);
+		times--;
+	}
+
+	return false;
+}
+
+bool cavan_send_CFUN(at_response_t rsp, u8 times)
+{
+	int value;
+
+	while (times > 0) {
+		at_exec_cmd(rsp, "AT+CFUN?");
+
+		at_resp_parse_line_args_by_kw(rsp, "+CFUN:", "+CFUN: %d", &value);
+		Log_d("value = %d", value);
+		if (value != 0) {
+			Log_d("%s stack opened.", DEVICE_NAME, value);
+			return true;
+		}
+
+		Log_i("\"AT+CFUN\" commands send retry...");
+		at_delayms(1000);
+		times--;
+	}
+
+	return false;
+}
+
+bool cavan_send_CSQ(at_response_t rsp, u8 times)
+{
+	char parsed_data[20];
+	int value0, value1;
+
+	while (times > 0) {
+		at_exec_cmd(rsp, "AT+CSQ");
+
+		at_resp_parse_line_args_by_kw(rsp, "+CSQ:", "+CSQ: %d,%d", &value0, &value1);
+		Log_d("value0 = %d, value1 = %d", value0, value1);
+		if (value0 != 99) {
+			Log_d("%s device signal strength: %d  Channel bit error rate: %d", DEVICE_NAME, value0, value1);
+			return true;
+		}
+
+		at_delayms(1000);
+		times--;
+	}
+
+	return false;
+}
+
 static int ml302_init(void)
 {
 #define INIT_RETRY                     3
@@ -298,11 +378,11 @@ static int ml302_init(void)
         ret = QCLOUD_ERR_FAILURE;
         goto __exit;
     }
-	/* power-up ml302 */
-	ml302_power(true);
 	
-	while(retry_num--)
-	{	
+	while(retry_num--) {
+		/* power-up ml302 */
+		ml302_power(true);
+
 		memset(g_IMEI, 0, IMEI_MAX_LEN);
 		/* wait ML302 startup finish, Send AT every 5s, if receive OK, SYNC success*/
 		if(at_obj_wait_connect(ML302_WAIT_CONNECT_TIME))
@@ -321,6 +401,36 @@ static int ml302_init(void)
 		}
 
 		at_delayms(100);
+
+#if 1
+		if (!cavan_send_VERCTRL(resp, 10)) {
+			ret = QCLOUD_ERR_FAILURE;
+			goto __exit;
+		}
+
+		at_delayms(1000);
+
+		if (!cavan_send_CPIN(resp, 10)) {
+			ret = QCLOUD_ERR_FAILURE;
+			goto __exit;
+		}
+
+		at_delayms(1000);
+
+		if (!cavan_send_CFUN(resp, 10)) {
+			ret = QCLOUD_ERR_FAILURE;
+			goto __exit;
+		}
+
+		at_delayms(1000);
+
+		if (!cavan_send_CSQ(resp, 10)) {
+			ret = QCLOUD_ERR_FAILURE;
+			goto __exit;
+		}
+
+		at_delayms(1000);
+#else
 		/* get module version */
 		ret = at_exec_cmd(resp, "ATI");
 		if (QCLOUD_RET_SUCCESS != ret) {
@@ -404,7 +514,7 @@ static int ml302_init(void)
 			goto __exit;
 		}
 		at_delayms(2000);
-		
+
 		/* check the GPRS network is registered */
         for (i = 0; i < CGREG_RETRY; i++)
         {
@@ -426,7 +536,7 @@ static int ml302_init(void)
         }
 		/* do not show the prompt when receiving data */
 		//at_exec_cmd(resp, "AT+CIPSRIP=0");
-		
+
 		/* check packet domain attach or detach */
         for (i = 0; i < CGATT_RETRY; i++)
         {
@@ -512,6 +622,7 @@ static int ml302_init(void)
 		at_delayms(2000);
         /* set active PDP context's profile number */
         //AT_SEND_CMD(client, resp, "AT+CSOCKSETPN=1");
+#endif
 
 #ifdef USING_RTC
 		{
@@ -560,8 +671,8 @@ static int ml302_init(void)
         if (ret != QCLOUD_RET_SUCCESS)
         {
             /* reset the ml302 device */
-        	ml302_reset();
-            at_delayms(1000);
+        	// ml302_reset();
+            // at_delayms(1000);
 
             Log_i("%s device initialize retry...", DEVICE_NAME);
         }
@@ -570,6 +681,8 @@ static int ml302_init(void)
     if (resp) {
         at_delete_resp(resp);
     }
+
+	Log_d("ret = %d", ret);
 	
     return ret;
 }
