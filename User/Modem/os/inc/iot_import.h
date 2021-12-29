@@ -15,6 +15,7 @@
 
 #ifndef QCLOUD_IOT_IMPORT_H_
 #define QCLOUD_IOT_IMPORT_H_
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -26,7 +27,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "config.h"
+#include <iot_config.h>
 #include "platform.h"
 #include "iot_error.h"
 #include "iot.h"

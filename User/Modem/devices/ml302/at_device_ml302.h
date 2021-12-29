@@ -18,7 +18,7 @@
 #define AT_RESP_TIMEOUT_MS        (5000)
 #define ML302_SEND_MAX_LEN_ONCE (256)
 #define ML302_MAX_SOCKET_NUM    (5)
-
+#define ML302_MAX_MQTT_NUM    (5)
 
 
 int at_device_ml302_init(void);

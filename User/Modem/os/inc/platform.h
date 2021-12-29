@@ -44,6 +44,15 @@ typedef unsigned long ssize_t;
 #include <unistd.h>
 #endif
 
+#if  defined ( __GNUC__ ) && !defined (__CC_ARM) /* GNU Compiler */
+  #ifndef __weak
+    #define __weak   __attribute__((weak))
+  #endif /* __weak */
+  #ifndef __packed
+    #define __packed __attribute__((__packed__))
+  #endif /* __packed */
+#endif /* __GNUC__ */
+
 #ifdef __cplusplus
 }
 #endif

@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <iot_config.h>
 #include "platform.h"
 
 /* IoT C-SDK version info */

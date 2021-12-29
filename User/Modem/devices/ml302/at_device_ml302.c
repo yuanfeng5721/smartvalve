@@ -21,6 +21,7 @@
 
 #include "at_client.h"
 #include "at_socket_inf.h"
+#include "at_mqtt_inf.h"
 #include "iot.h"
 #include "iot_import.h"
 #include "utils_param_check.h"
@@ -39,10 +40,16 @@
 #define SEND_FAIL_FLAG (1 << 3)
 
 volatile uint8_t sg_SocketBitMap = 0;
+volatile uint8_t sg_MqttBitMap = 0;
 
 static at_evt_cb_t at_evt_cb_table[] = {
     [AT_SOCKET_EVT_RECV]   = NULL,
     [AT_SOCKET_EVT_CLOSED] = NULL,
+};
+
+static at_mqtt_evt_cb_t at_mqtt_evt_cb_table[] = {
+    [AT_MQTT_EVT_RECV]   = NULL,
+    [AT_MQTT_EVT_CLOSED] = NULL,
 };
 
 static char g_IMEI[IMEI_MAX_LEN] = {0};
@@ -71,6 +78,30 @@ static void free_fd(int fd)
     }
 }
 
+
+static int alloc_mqtt_fd(void)
+{
+    uint8_t i = 0;
+
+    for (i = 0; i < ML302_MAX_MQTT_NUM; i++) {
+        if (0 == ((sg_MqttBitMap >> i) & 0x01)) {
+        	sg_MqttBitMap |= (1 << i) & 0xff;
+			Log_d("MqttBitMap = 0x%x ", sg_MqttBitMap);
+            break;
+        }
+    }
+
+    return (i < ML302_MAX_MQTT_NUM) ? i : UNUSED_MQTT;
+}
+
+static void free_mqtt_fd(int fd)
+{
+    //uint8_t i = fd;
+
+    if ((fd != UNUSED_MQTT) && fd < ML302_MAX_MQTT_NUM) {
+    	sg_MqttBitMap &= ~((1 << fd) & 0xff);
+    }
+}
 /* unsolicited TCP/IP command<err> codes */
 static void at_tcp_ip_errcode_parse(int result)
 {
@@ -222,20 +253,48 @@ static void urc_func(const char *data, size_t size)
 //    }
 }
 
+static void urc_mqtt_func(const char *data, size_t size)
+{
+	POINTER_SANITY_CHECK_RTN(data);
+	Log_i("mqtt: %s \r\n", data);
+}
+
+static void urc_mqtt_connect_func(const char *data, size_t size)
+{
+	POINTER_SANITY_CHECK_RTN(data);
+	Log_i("mqtt connect: %s \r\n", data);
+}
+
+static void urc_mqtt_disconnect_func(const char *data, size_t size)
+{
+	POINTER_SANITY_CHECK_RTN(data);
+	Log_i("mqtt disconnect: %s \r\n", data);
+}
+
 static at_urc urc_table[] = 
 {
 	//{"+CAACK",   "\r\n", urc_send_func},
-	{"+CAOPEN",  "\r\n", urc_connect_func},
-	{"+CACLOSE", "\r\n", urc_close_func},
-	{"+CAURC",   "\r\n", urc_recv_func},
-	{"+SGNSCMD", "\r\n", urc_gnss_func},
-	{"+CPSI",    "\r\n", urc_net_info_func},
+	{"+CAOPEN",    "\r\n", urc_connect_func},
+	{"+CACLOSE",   "\r\n", urc_close_func},
+	{"+CAURC",     "\r\n", urc_recv_func},
+//	{"+SGNSCMD",   "\r\n", urc_gnss_func},
+//	{"+CPSI",      "\r\n", urc_net_info_func},
+	{"+MMQTTURC",  "\r\n", urc_mqtt_func},
+	{"+MMQTTCON",  "\r\n", urc_mqtt_connect_func},
+	{"+MMQTTDISCON","\r\n", urc_mqtt_disconnect_func},
 };
 
 static void ml302_set_event_cb(at_socket_evt_t event, at_evt_cb_t cb)
 {
     if (event < sizeof(at_evt_cb_table) / sizeof(at_evt_cb_table[0])) {
         at_evt_cb_table[event] = cb;
+    }
+}
+
+static void ml302_set_mqtt_event_cb(at_mqtt_evt_t event, at_mqtt_evt_cb_t cb)
+{
+    if (event < sizeof(at_mqtt_evt_cb_table) / sizeof(at_mqtt_evt_cb_table[0])) {
+    	at_mqtt_evt_cb_table[event] = cb;
     }
 }
 
@@ -1022,6 +1081,36 @@ __exit:
 	return ret;
 }
 
+static int ml302_mqtt_connect(const char *host, int port, const char *client_id, const char *username, const char *password)
+{
+
+
+}
+
+static int ml302_mqtt_disconnect(int connect_id)
+{
+
+
+}
+
+static int ml302_mqtt_sub(int connect_id, const char *topic, int packet_id, u8 qos)
+{
+
+
+}
+
+static int ml302_mqtt_pub(int connect_id, const char *topic, u8 *data, size_t len, int packet_id, u8 qos)
+{
+
+
+}
+
+static int ml302_mqtt_unsub(int connect_id, const char *topic, int packet_id)
+{
+
+
+}
+
 at_device_op_t at_ops_ml302 = {
     .init         = ml302_init,
 	.deinit       = ml302_deinit,
@@ -1034,6 +1123,16 @@ at_device_op_t at_ops_ml302 = {
     .parse_domain = ml302_parse_domain,
     .set_event_cb = ml302_set_event_cb,
     .deviceName   = "ml302",
+};
+
+at_mqtt_op_t at_mqtt_ops_ml302 = {
+	.mqtt_connect		= ml302_mqtt_connect,
+	.mqtt_disconnect	= ml302_mqtt_disconnect,
+	.mqtt_pub			= ml302_mqtt_pub,
+	.mqtt_sub			= ml302_mqtt_sub,
+	.mqtt_unsub         = ml302_mqtt_unsub,
+	.set_event_cb		= ml302_set_mqtt_event_cb,
+	.deviceName   		= "ml302",
 };
 
 int at_device_ml302_init(void)
@@ -1097,4 +1196,5 @@ char *at_device_get_imei(void)
 	else
 		return NULL;
 }
+
 #endif /*AT_DEVICE_ML302*/

@@ -65,7 +65,7 @@ typedef void (*at_evt_cb_t)(int fd, at_socket_evt_t event, char *buff, size_t bf
 typedef struct {
     int (*init)(void);
 	int (*deinit)(void);
-	void (*power)(bool);
+	int (*power)(bool);
 	int (*get_info)(ue_info *info);
     int (*get_local_mac)(char *macbuff, size_t bufflen);
     int (*get_local_ip)(char *ip, size_t iplen, char *gw, size_t gwlen, char *mask, size_t masklen);

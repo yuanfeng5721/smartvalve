@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include "iot_config.h"
 #include "stddef.h"
 #include "utils_ringbuff.h"
 
