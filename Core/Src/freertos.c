@@ -31,6 +31,7 @@
 #include "log.h"
 #include "at_device.h"
 #include "usart.h"
+#include "sensors_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,9 +111,10 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
 
 void StartModemTask(void const * argument)
 {
-	modem_init();
+	//modem_init();
 
 	while (1) {
+		//LOGD("hello world!!!\r\n");
 		osDelay(2000);
 	}
 }
@@ -187,7 +189,6 @@ void StartRs485Task(void const * argument)
 		}
 	}
 }
-
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
@@ -230,6 +231,8 @@ void MX_FREERTOS_Init(void) {
 
   osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
   rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
+
+  Sensors_Task_Init();
   /* USER CODE END RTOS_THREADS */
 
 }

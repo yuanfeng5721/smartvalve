@@ -11,5 +11,11 @@
 void modem_power(bool onoff);
 void modem_pwr_key(bool press, uint16_t ms);
 void modem_reset(void);
+void sensors_power(bool onoff);
 
+/****************************************************
+ *  platform tools
+ *****************************************************/
+void Delay_MS(uint16_t ms);
+void Delay_S(uint16_t s);
 #endif

@@ -41,7 +41,8 @@ extern ADC_HandleTypeDef hadc;
 void MX_ADC_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+int MX_ADC_Start(uint32_t* pData, uint32_t Length);
+__weak void MX_ADC_ConvCpltCallback(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
