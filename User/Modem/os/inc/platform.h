@@ -44,6 +44,7 @@ typedef unsigned long ssize_t;
 #include <unistd.h>
 #endif
 
+//#include "stm32l1xx_hal_def.h"
 #if  defined ( __GNUC__ ) && !defined (__CC_ARM) /* GNU Compiler */
   #ifndef __weak
     #define __weak   __attribute__((weak))

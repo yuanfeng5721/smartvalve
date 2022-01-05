@@ -63,6 +63,7 @@ typedef struct {
     eMqttState       state;
 } at_mqtt_ctx_t;
 
+int at_mqtt_op_register(at_mqtt_op_t *device_op);
 // at mqtt api
 int at_mqtt_init(void);
 int at_mqtt_deinit(void);

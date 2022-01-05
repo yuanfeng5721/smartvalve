@@ -28,16 +28,28 @@
 #include "rtc.h"
 #include "log.h"
 #include "utils_timer.h"
-
+#include "board.h"
 //#define USING_RTC
 
 
 #undef DEVICE_NAME
 #define DEVICE_NAME    "ML302"
-#define NET_CONN_OK_FLAG (1 << 0)
-#define NET_CONN_FAIL_FLAG (1 << 1)
-#define SEND_OK_FLAG   (1 << 2)
-#define SEND_FAIL_FLAG (1 << 3)
+
+//#define NET_CONN_OK_FLAG (1 << 0)
+//#define NET_CONN_FAIL_FLAG (1 << 1)
+//#define SEND_OK_FLAG   (1 << 2)
+//#define SEND_FAIL_FLAG (1 << 3)
+
+typedef enum{
+	NET_CONN_OK_FLAG = (1 << 0),
+	NET_CONN_FAIL_FLAG = (1 << 1),
+	SEND_OK_FLAG = (1 << 2),
+	SEND_FAIL_FLAG = (1 << 3),
+	MQTT_CONN_OK_FLAG = (1 << 4),
+	MQTT_CONN_FAIL_FLAG = (1 << 5),
+	MQTT_DISCONN_OK_FLAG = (1 << 6),
+	MQTT_DISCONN_FAIL_FLAG = (1 << 7),
+}wait_flag_t;
 
 volatile uint8_t sg_SocketBitMap = 0;
 volatile uint8_t sg_MqttBitMap = 0;
@@ -128,7 +140,8 @@ static void urc_connect_func(const char *data, size_t size)
     int device_socket = 0, result = 0;
  
 
-    POINTER_SANITY_CHECK_RTN(data && size);
+    POINTER_SANITY_CHECK_RTN(data);
+    NUMBERIC_SANITY_CHECK_RTN(size);
 
     sscanf(data, "+CAOPEN: %d,%d", &device_socket, &result);
 
@@ -149,7 +162,8 @@ static void urc_send_func(const char *data, size_t size)
 {
 	int totalsize, unacksize;
 	
-    POINTER_SANITY_CHECK_RTN(data && size);
+    POINTER_SANITY_CHECK_RTN(data);
+    NUMBERIC_SANITY_CHECK_RTN(size);
 
     sscanf(data, "+CAACK: %d,%d", &totalsize, &unacksize);
 
@@ -238,7 +252,7 @@ static void urc_net_info_func(const char *data, size_t size)
 static void urc_func(const char *data, size_t size)
 {
     POINTER_SANITY_CHECK_RTN(data);
-    int i;
+//    int i;
 
 //    if (strstr(data, "WIFI CONNECTED")) {
 //        at_setFlag(WIFI_CONN_FLAG);
@@ -261,14 +275,44 @@ static void urc_mqtt_func(const char *data, size_t size)
 
 static void urc_mqtt_connect_func(const char *data, size_t size)
 {
+	int connect_id = 0, result = 0;
+
 	POINTER_SANITY_CHECK_RTN(data);
-	Log_i("mqtt connect: %s \r\n", data);
+	NUMBERIC_SANITY_CHECK_RTN(size);
+
+	//+MMQTTCON: 0,0
+	sscanf(data, "+MMQTTCON: %d,%d", &connect_id, &result);
+
+	if (result == 0)
+	{
+		at_setFlag(MQTT_CONN_OK_FLAG);
+	}
+	else
+	{
+		//at_tcp_ip_errcode_parse(result);
+		at_setFlag(MQTT_CONN_FAIL_FLAG);
+	}
 }
 
 static void urc_mqtt_disconnect_func(const char *data, size_t size)
 {
+	int connect_id = 0, result = 0;
+
 	POINTER_SANITY_CHECK_RTN(data);
-	Log_i("mqtt disconnect: %s \r\n", data);
+	NUMBERIC_SANITY_CHECK_RTN(size);
+
+	//+MMQTTDISCON: 0,0
+	sscanf(data, "+MMQTTDISCON: %d,%d", &connect_id, &result);
+
+	if (result == 0)
+	{
+		at_setFlag(MQTT_DISCONN_OK_FLAG);
+	}
+	else
+	{
+		//at_tcp_ip_errcode_parse(result);
+		at_setFlag(MQTT_DISCONN_FAIL_FLAG);
+	}
 }
 
 static at_urc urc_table[] = 
@@ -395,7 +439,6 @@ bool cavan_send_CFUN(at_response_t rsp, u8 times)
 
 bool cavan_send_CSQ(at_response_t rsp, u8 times)
 {
-	char parsed_data[20];
 	int value0, value1;
 
 	while (times > 0) {
@@ -426,9 +469,9 @@ static int ml302_init(void)
 #define CCLK_RETRY                     10
     at_response_t resp = NULL;
     int           ret;
-    int           i;
-	int 		  qi_arg[3] = {0};
-	char          parsed_data[20] = {0};
+    //int           i;
+	//int 		  qi_arg[3] = {0};
+	//char          parsed_data[20] = {0};
 	int           retry_num = INIT_RETRY;
 	
     resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
@@ -793,7 +836,7 @@ static int ml302_connect(const char *ip, uint16_t port, eNetProto proto)
     bool          retryed = false;
     int           fd = 0, ret;
 	uint8_t       recv_mode = 1;
-	int           cid, result = 1;
+	//int           cid;
 
     POINTER_SANITY_CHECK(ip, QCLOUD_ERR_INVAL);
     resp = at_create_resp(128, 0, 2*AT_RESP_TIMEOUT_MS);
@@ -1083,32 +1126,132 @@ __exit:
 
 static int ml302_mqtt_connect(const char *host, int port, const char *client_id, const char *username, const char *password)
 {
+	at_response_t resp = NULL;
+	int ret, connect_id;
 
+	POINTER_SANITY_CHECK(host, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(client_id, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(username, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(password, QCLOUD_ERR_INVAL);
 
+	resp = at_create_resp(160, 2, 2*AT_RESP_TIMEOUT_MS);
+	if (NULL == resp)
+	{
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto __exit;
+	}
+	connect_id = alloc_mqtt_fd();
+
+//__retry:
+	at_clearFlag(MQTT_CONN_OK_FLAG);
+	at_clearFlag(MQTT_CONN_FAIL_FLAG);
+	//AT+MMQTTCON=<connect_id>,<ip/host_name>,<port>,<client_id>[,<username>[,<password>[,<keepalive_interval>[,<req_timeout>
+	//[,<clean_session>[,<will_flag>,<will_qos>,<will_retain>,<will_topic>,<will_message>[,auto_connect]]]]]]
+	ret = at_exec_cmd(resp, "AT+MMQTTCON=%d,%s,%d,%s,%s,%s", connect_id, host, port, client_id, username, password);
+	if(QCLOUD_RET_SUCCESS == ret)
+	{
+		if(at_waitFlag(MQTT_CONN_OK_FLAG|MQTT_CONN_FAIL_FLAG, 2*AT_RESP_TIMEOUT_MS))
+		{
+			if(at_waitFlag(MQTT_CONN_FAIL_FLAG, 100))
+			{
+				Log_e("mqtt connect fail!!!");
+				ret = QCLOUD_ERR_FAILURE;
+				//goto __exit;
+			}
+		}
+		else
+		{
+			Log_e("mqtt connect timeout!!!");
+			ret = QCLOUD_ERR_FAILURE;
+			//goto __exit;
+		}
+	}
+
+__exit:
+
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+	if (QCLOUD_RET_SUCCESS != ret) {
+		free_mqtt_fd(connect_id);
+		connect_id = UNUSED_MQTT;
+	}
+
+	return connect_id;
 }
 
 static int ml302_mqtt_disconnect(int connect_id)
 {
+	at_response_t resp;
+	int           ret;
+
+	resp = at_create_resp(64, 0, 2*AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		return QCLOUD_ERR_FAILURE;
+	}
+
+	ret = at_exec_cmd(resp, "AT+MMQTTDISCON=%d", connect_id);
+
+	if (QCLOUD_RET_SUCCESS != ret) {
+		Log_e("close mqtt(%d) fail", connect_id);
+		goto __exit;
+	}
+	else
+	{
+		if(QCLOUD_RET_SUCCESS == ret)
+		{
+			if(at_waitFlag(MQTT_DISCONN_OK_FLAG|MQTT_DISCONN_FAIL_FLAG, 2*AT_RESP_TIMEOUT_MS))
+			{
+				if(at_waitFlag(MQTT_DISCONN_FAIL_FLAG, 100))
+				{
+					Log_e("mqtt disconnect fail!!!");
+					ret = QCLOUD_ERR_FAILURE;
+					goto __exit;
+				}
+			}
+			else
+			{
+				Log_e("mqtt disconnect timeout!!!");
+				ret = QCLOUD_ERR_FAILURE;
+				goto __exit;
+			}
+		}
+	}
 
 
+	if (at_mqtt_evt_cb_table[AT_MQTT_EVT_CLOSED]) {
+		at_mqtt_evt_cb_table[AT_MQTT_EVT_CLOSED](connect_id, AT_MQTT_EVT_CLOSED, NULL, 0);
+	}
+
+	free_mqtt_fd(connect_id);
+
+__exit:
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+	return ret;
 }
 
-static int ml302_mqtt_sub(int connect_id, const char *topic, int packet_id, u8 qos)
+static int ml302_mqtt_sub(int connect_id, const char *topic, int packet_id, unsigned char qos)
 {
 
-
+	return 0;
 }
 
-static int ml302_mqtt_pub(int connect_id, const char *topic, u8 *data, size_t len, int packet_id, u8 qos)
+static int ml302_mqtt_pub(int connect_id, const char *topic, char *data, size_t len, int packet_id, unsigned char qos)
 {
 
-
+	return 0;
 }
 
 static int ml302_mqtt_unsub(int connect_id, const char *topic, int packet_id)
 {
 
-
+	return 0;
 }
 
 at_device_op_t at_ops_ml302 = {
@@ -1171,6 +1314,12 @@ int at_device_ml302_init(void)
         Log_e("at device driver register fail");
         goto exit;
     }
+
+    ret = at_mqtt_op_register(&at_mqtt_ops_ml302);
+    if (QCLOUD_RET_SUCCESS != ret) {
+		Log_e("at mqtt driver register fail");
+		goto exit;
+	}
 
 exit:
     if (QCLOUD_RET_SUCCESS != ret) {
