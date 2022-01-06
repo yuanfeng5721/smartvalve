@@ -32,6 +32,7 @@
 #include "at_device.h"
 #include "usart.h"
 #include "sensors_task.h"
+#include "nvitem.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -248,6 +249,7 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   // modem_init();
+  nv_item_init();
   /* Infinite loop */
   for(;;)
   {

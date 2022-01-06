@@ -108,10 +108,11 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   log_init();
-  LOGI("SmartValve2 start........!\r\n");
+
+  print_software_version();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

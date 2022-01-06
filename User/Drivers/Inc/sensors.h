@@ -13,9 +13,9 @@
 
 #define ADC_CHANNEL_NAME_LEN   15
 #define SAMPLE_ADC_CHANNEL     7
-#define AVERAGE_MAX_NUM        1
+#define AVERAGE_MAX_NUM        12
 typedef enum{
-	MOTO_BAT_CH,
+	MOTO_BAT_CH = 0,
 	VALVE_ANGLE_CH,
 	PRESS_REAR_CH,
 	PRESS_FRONT_CH,
@@ -25,12 +25,12 @@ typedef enum{
 	MAX_SAMPLE_CH
 }sample_channel_e;
 
-#define MOTO_BATTERY "moto_battery"
-#define VALVE_ANGLE  "angle"
-#define STRESS_FRONT "front_stress"
-#define STRESS_REAR  "rear_stress"
+#define MOTO_BATTERY    "moto_battery"
+#define VALVE_ANGLE     "angle"
+#define STRESS_FRONT    "front_press"
+#define STRESS_REAR     "rear_press"
 #define SYSTEM_BATTERY  "sys_battery"
-#define SYSTEM_TEMP    "sys_temp"
+#define SYSTEM_TEMP     "sys_temp"
 
 typedef struct linear_equs_t{
 	float sploe;

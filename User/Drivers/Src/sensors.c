@@ -53,7 +53,7 @@ static float get_ntc_resistance(float voltage)
 static float get_ntc_temp(float voltage)
 {
 	const float Rp = 10000.0; //10K
-	const float T2 = (273.15+25.0);;//T2
+	const float T2 = (273.15+25.0);//T2
 	const float Bx = 3380.0;//B
 	const float Ka = 273.15;
 
@@ -264,6 +264,7 @@ sensors_sample_t* Sensors_Sample_Data(void)
 					ADCSample[ch].voltage = vcc;
 				}
 				sensor_convert(ch, ADCSample[ch].voltage);
+				osDelay(10);
 				LOGI("Read Voltage:vcc[%s] = %0.2fv , value = %.2f\r\n",ADCSample[ch].name, ADCSample[ch].voltage, ADCSample[ch].value);
 			}
 			#if TEST_ADC
