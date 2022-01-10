@@ -321,7 +321,7 @@ static EfErrCode ef_set_array(const char *key, void *value, size_t len, ef_array
                 cJSON_AddItemToArray(array, array_item);
             } else {
                 result = EF_ENV_FULL;
-                EF_INFO("Memory full!\n", key);
+                EF_INFO("%s: Memory full!\n", key);
                 break;
             }
         }
@@ -331,12 +331,12 @@ static EfErrCode ef_set_array(const char *key, void *value, size_t len, ef_array
             s2jHook.free_fn(char_value);
         } else {
             result = EF_ENV_FULL;
-            EF_INFO("Memory full!\n", key);
+            EF_INFO("%s: Memory full!\n", key);
         }
         cJSON_Delete(array);
     } else {
         result = EF_ENV_FULL;
-        EF_INFO("Memory full!\n", key);
+        EF_INFO("%s: Memory full!\n", key);
     }
     return result;
 }

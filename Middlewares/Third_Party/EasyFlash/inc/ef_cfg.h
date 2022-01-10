@@ -30,69 +30,68 @@
 #define EF_CFG_H_
 #include "stm32l1xx_hal.h"
 
+#define USE_EEPROM
 #define EF_USING_S2J
 /* using ENV function, default is NG (Next Generation) mode start from V4.0 */
 #define EF_USING_ENV
-
-#ifdef EF_USING_ENV
-/* Auto update ENV to latest default when current ENV version number is changed. */
-#define EF_ENV_AUTO_UPDATE
-/**
- * ENV version number defined by user.
- * Please change it when your firmware add a new ENV to default_env_set.
- */
-#define EF_ENV_VER_NUM       0     /* @note you must define it for a value, such as 0 */
- 
-/* MCU Endian Configuration, default is Little Endian Order. */
-/* #define EF_BIG_ENDIAN  */         
-
-#endif /* EF_USING_ENV */
+/* using wear leveling mode for ENV */
+/* #define EF_ENV_USING_WL_MODE */
+/* using power fail safeguard mode for ENV */
+/* #define EF_ENV_USING_PFS_MODE */
 
 /* using IAP function */
-/* #define EF_USING_IAP */
+//#define EF_USING_IAP
 
 /* using save log function */
 /* #define EF_USING_LOG */
 
-/* The minimum size of flash erasure. May be a flash sector size. */
-#define EF_ERASE_MIN_SIZE         4 //eeprom //0x1000 /* @note you must define it for a value */
+/* the minimum size of flash erasure */
+#define EF_ERASE_MIN_SIZE   4      /* @note you must define it for a value */
 
-/* the flash write granularity, unit: bit
- * only support 1(nor flash)/ 8(stm32f4)/ 32(stm32f1) */
-#define EF_WRITE_GRAN             32/* @note you must define it for a value */
-
-/*
+/**
  *
  * This all Backup Area Flash storage index. All used flash area configure is under here.
  * |----------------------------|   Storage Size
  * | Environment variables area |   ENV area size @see ENV_AREA_SIZE
+ * |      1.system section      |   ENV_SYSTEM_SIZE
+ * |      2:data section        |   ENV_AREA_SIZE - ENV_SYSTEM_SIZE
  * |----------------------------|
  * |      Saved log area        |   Log area size @see LOG_AREA_SIZE
  * |----------------------------|
  * |(IAP)Downloaded application |   IAP already downloaded application, unfixed size
  * |----------------------------|
  *
- * @note all area sizes must be aligned with EF_ERASE_MIN_SIZE
- *
- * The EasyFlash add the NG (Next Generation) mode start from V4.0. All old mode before V4.0, called LEGACY mode.
- *
- * - NG (Next Generation) mode is default mode from V4.0. It's easy to settings, only defined the ENV_AREA_SIZE.
- * - The LEGACY mode has been DEPRECATED. It is NOT RECOMMENDED to continue using.
- *   Beacuse it will use ram to buffer the ENV and spend more flash erase times.
- *   If you want use it please using the V3.X version.
+ * @note all area size must be aligned with EF_ERASE_MIN_SIZE
+ * @note EasyFlash will use ram to buffered the ENV. At some time flash's EF_ERASE_MIN_SIZE is so big,
+ *       and you want use ENV size is less than it. So you must defined ENV_USER_SETTING_SIZE for ENV.
+ * @note ENV area size has some limitations in different modes.
+ *       1.Normal mode: no more limitations
+ *       2.Wear leveling mode: system section will used an flash section and the data section will used at least 2 flash sections
+ *       3.Power fail safeguard mode: ENV area will has an backup. It is twice as normal mode.
+ *       4.wear leveling and power fail safeguard mode: The required capacity will be 2 times the total capacity in wear leveling mode.
+ *       For example:
+ *       The EF_ERASE_MIN_SIZE is 128K and the ENV_USER_SETTING_SIZE: 2K. The ENV_AREA_SIZE in different mode you can define
+ *       1.Normal mode: 1*EF_ERASE_MIN_SIZE
+ *       2.Wear leveling mode: 3*EF_ERASE_MIN_SIZE (It has 2 data section to store ENV. So ENV can erase at least 200,000 times)
+ *       3.Power fail safeguard mode: 2*EF_ERASE_MIN_SIZE
+ *       4.Wear leveling and power fail safeguard mode: 6*EF_ERASE_MIN_SIZE
+ * @note the log area size must be more than twice of EF_ERASE_MIN_SIZE
  */
-
 /* backup area start address */
-#define EF_START_ADDR             FLASH_EEPROM_BASE/* @note you must define it for a value */
-
-/* ENV area size. It's at least one empty sector for GC. So it's definition must more then or equal 2 flash sector size. */
-#define ENV_AREA_SIZE             (10*1024)/* @note you must define it for a value if you used ENV */
-
+#define EF_START_ADDR      0x08080000       /* @note you must define it for a value */
+/* the user setting size of ENV, must be word alignment */
+#define ENV_USER_SETTING_SIZE    (8*1024) /* @note you must define it for a value if you used ENV */
+/* ENV area total bytes size in normal mode. */
+#define ENV_AREA_SIZE         (256*8*EF_ERASE_MIN_SIZE)    //3kB/* @note you must define it for a value if you used ENV */
 /* saved log area size */
-#define LOG_AREA_SIZE             (4*EF_ERASE_MIN_SIZE)/* @note you must define it for a value if you used log */
+/*#define LOG_AREA_SIZE */            /* @note you must define it for a value if you used log */
 
 /* print debug information of flash */
 #define PRINT_DEBUG
+#define MY_PRINT_DEBUG
 #define EF_STR_ENV_VALUE_MAX_SIZE     256
-#define EF_DEFAULT_ENV_ITEM           1
+#define EF_DEFAULT_ENV_ITEM           22
+
+//#define EF_ENV_CACHE_TABLE_SIZE 0
+//#define EF_SECTOR_CACHE_TABLE_SIZE 0
 #endif /* EF_CFG_H_ */

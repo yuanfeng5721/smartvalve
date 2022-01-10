@@ -1,7 +1,7 @@
 /*
  * This file is part of the EasyFlash Library.
  *
- * Copyright (c) 2014-2019, Armink, <armink.ztl@gmail.com>
+ * Copyright (c) 2014-2016, Armink, <armink.ztl@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,36 +26,36 @@
  * Created on: 2014-09-09
  */
 
-/*
+/**
  *
  * This all Backup Area Flash storage index. All used flash area configure is under here.
  * |----------------------------|   Storage Size
  * | Environment variables area |   ENV area size @see ENV_AREA_SIZE
+ * |      1.system section      |   ENV system section size
+ * |      2:data section        |   ENV_AREA_SIZE - ENV system section size
  * |----------------------------|
  * |      Saved log area        |   Log area size @see LOG_AREA_SIZE
  * |----------------------------|
  * |(IAP)Downloaded application |   IAP already downloaded application, unfixed size
  * |----------------------------|
  *
- * @note all area sizes must be aligned with EF_ERASE_MIN_SIZE
- *
- * The EasyFlash add the NG (Next Generation) mode start from V4.0. All old mode before V4.0, called LEGACY mode.
- *
- * - NG (Next Generation) mode is default mode from V4.0. It's easy to settings, only defined the ENV_AREA_SIZE.
- * - The LEGACY mode has been DEPRECATED. It is NOT RECOMMENDED to continue using.
- *   Beacuse it will use ram to buffer the ENV and spend more flash erase times.
- *   If you want use it please using the V3.X version.
+ * @note all area size must be aligned with EF_ERASE_MIN_SIZE
+ * @note EasyFlash will use ram to buffered the ENV. At some time flash's EF_ERASE_MIN_SIZE is so big,
+ *       and you want use ENV size is less than it. So you must defined ENV_USER_SETTING_SIZE for ENV.
+ * @note ENV area size has some limitations in different modes.
+ *       1.Normal mode: no more limitations
+ *       2.Wear leveling mode: system section will used an flash section and the data section will used at least 2 flash sections
+ *       3.Power fail safeguard mode: ENV area will has an backup. It is twice as normal mode.
+ *       4.wear leveling and power fail safeguard mode: The required capacity will be 2 times the total capacity in wear leveling mode.
+ *       For example:
+ *       The EF_ERASE_MIN_SIZE is 128K and the ENV_USER_SETTING_SIZE: 2K. The ENV_AREA_SIZE in different mode you can define
+ *       1.Normal mode: 1*EF_ERASE_MIN_SIZE
+ *       2.Wear leveling mode: 3*EF_ERASE_MIN_SIZE (It has 2 data section to store ENV. So ENV can erase at least 200,000 times)
+ *       3.Power fail safeguard mode: 2*EF_ERASE_MIN_SIZE
+ *       4.Wear leveling and power fail safeguard mode: 6*EF_ERASE_MIN_SIZE
+ * @note the log area size must be more than twice of EF_ERASE_MIN_SIZE
  */
-
 #include <easyflash.h>
-
-#if !defined(EF_START_ADDR)
-#error "Please configure backup area start address (in ef_cfg.h)"
-#endif
-
-#if !defined(EF_ERASE_MIN_SIZE)
-#error "Please configure minimum size of flash erasure (in ef_cfg.h)"
-#endif
 
 /**
  * EasyFlash system initialize.
@@ -93,11 +93,11 @@ EfErrCode easyflash_init(void) {
 #endif
 
     if (result == EF_NO_ERR) {
-        EF_INFO("EasyFlash V%s is initialize success.\n", EF_SW_VERSION);
+        EF_DEBUG("EasyFlash V%s is initialize success.\n", EF_SW_VERSION);
     } else {
-        EF_INFO("EasyFlash V%s is initialize fail.\n", EF_SW_VERSION);
+        EF_DEBUG("EasyFlash V%s is initialize fail.\n", EF_SW_VERSION);
     }
-    //EF_INFO("You can get the latest version on https://github.com/armink/EasyFlash .\n");
+    //EF_DEBUG("You can get the latest version on https://github.com/armink/EasyFlash .\n");
 
     return result;
 }

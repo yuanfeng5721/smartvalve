@@ -8,9 +8,9 @@
 #ifndef APPLICATION_INC_DEVICE_NV_H_
 #define APPLICATION_INC_DEVICE_NV_H_
 
-#define DEFAULT_NV_ITEMS  24
+#define DEFAULT_NV_ITEMS  EF_DEFAULT_ENV_ITEM   //22 items
 
-#define NV_FLAG "nv_flag"
+//#define NV_FLAG "nv_flag"
 #define NV_VERSION "nv_version"
 #define UPDATE_FREQ   "update_freq"
 #define NV_IMEI      		"imei"
@@ -38,26 +38,32 @@
 /**********************************************************************
  * 						nv value define
  **********************************************************************/
-#define NVFLAG "AA55"
-#define NVVERSION "1"
-#define FORCE_UPDATE_NV "no" ///"yes" is force update nv, "no" don't update nv
+//#define NVFLAG "AA55"
+//#define NV_VERSION 1
+//#define FORCE_UPDATE_NV "no" ///"yes" is force update nv, "no" don't update nv
 
 #define SW_VERSION "V1.0.0"
 #define HW_VERSION "V1.0"
 
 
+/*********************************************************************
+ *
+ *********************************************************************/
+#define PB_DEFAULT_KEY  "PRESS_BACK_DEFAULT"
+#define PB_DEFAULT_NUM  72
 
+#define Q_DEFAULT_KEY   "Q_DEFAULT"
+#define Q_DEFAULT_NUM   72
 
+#define ZETA_KEY        "ZETA"
+#define ZETA_NUM        50
 
-
-
-
-
-
+#define ANGLE_DEFAULT_KEY "ANGLE_DEFAULT"
+#define ANGLE_DEFAULT_NUM 72
 /***********************************************************************
  * 						function define
  ***********************************************************************/
 void print_software_version(void);
-
+int init_nvitems(void);
 
 #endif /* APPLICATION_INC_DEVICE_NV_H_ */

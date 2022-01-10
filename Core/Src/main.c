@@ -113,6 +113,8 @@ int main(void)
   log_init();
 
   print_software_version();
+
+  //test_nv_def();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
