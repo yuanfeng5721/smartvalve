@@ -8,7 +8,7 @@
 #ifndef APPLICATION_INC_DEVICE_NV_H_
 #define APPLICATION_INC_DEVICE_NV_H_
 
-#define DEFAULT_NV_ITEMS  EF_DEFAULT_ENV_ITEM   //22 items
+#define DEFAULT_NV_ITEMS  DEFAULT_NV_ITEM_NUM   //22 items
 
 //#define NV_FLAG "nv_flag"
 #define NV_VERSION "nv_version"

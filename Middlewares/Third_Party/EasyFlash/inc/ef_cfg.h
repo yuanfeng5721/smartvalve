@@ -32,7 +32,6 @@
 
 #define USE_EEPROM
 #define EF_USING_S2J
-/* using ENV function, default is NG (Next Generation) mode start from V4.0 */
 #define EF_USING_ENV
 /* using wear leveling mode for ENV */
 /* #define EF_ENV_USING_WL_MODE */
@@ -80,9 +79,9 @@
 /* backup area start address */
 #define EF_START_ADDR      0x08080000       /* @note you must define it for a value */
 /* the user setting size of ENV, must be word alignment */
-#define ENV_USER_SETTING_SIZE    (8*1024) /* @note you must define it for a value if you used ENV */
+#define ENV_USER_SETTING_SIZE    (6*1024) /* @note you must define it for a value if you used ENV */
 /* ENV area total bytes size in normal mode. */
-#define ENV_AREA_SIZE         (256*8*EF_ERASE_MIN_SIZE)    //3kB/* @note you must define it for a value if you used ENV */
+#define ENV_AREA_SIZE         (6*1024)    //3kB/* @note you must define it for a value if you used ENV */
 /* saved log area size */
 /*#define LOG_AREA_SIZE */            /* @note you must define it for a value if you used log */
 
@@ -90,7 +89,7 @@
 #define PRINT_DEBUG
 #define MY_PRINT_DEBUG
 #define EF_STR_ENV_VALUE_MAX_SIZE     256
-#define EF_DEFAULT_ENV_ITEM           22
+#define EF_DEFAULT_ENV_ITEM           1
 
 //#define EF_ENV_CACHE_TABLE_SIZE 0
 //#define EF_SECTOR_CACHE_TABLE_SIZE 0

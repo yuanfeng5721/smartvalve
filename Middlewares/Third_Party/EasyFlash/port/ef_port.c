@@ -35,10 +35,10 @@
 #include "cmsis_os.h"
 
 /* default environment variables set for user */
-//static const ef_env default_env_set[EF_DEFAULT_ENV_ITEM] = {
-//		{"SOFTWART_VERSION", "v1.0.0", strlen("v1.0.0")},
-//};
-extern const ef_env default_env_set[EF_DEFAULT_ENV_ITEM];
+static const ef_env default_env_set[EF_DEFAULT_ENV_ITEM] = {
+		{"EF_VERSION", "v1.0.0", strlen("v1.0.0")},
+};
+//extern const ef_env default_env_set[EF_DEFAULT_ENV_ITEM];
 static char log_buf[80];
 osMutexId p_flash_mutex;
 /**
@@ -107,22 +107,27 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 	uint32_t PAGEError = 0;
 	uint8_t retry = 0;
     /* make sure the start address is a multiple of EF_ERASE_MIN_SIZE */
-    //EF_ASSERT(addr % EF_ERASE_MIN_SIZE == 0);
+    EF_ASSERT(addr % EF_ERASE_MIN_SIZE == 0);
 
     /* You can add your code under here. */
-	//erase_count = size/EF_ERASE_MIN_SIZE;
+	erase_count = size/EF_ERASE_MIN_SIZE;
 
-	//if(size%EF_ERASE_MIN_SIZE != 0)
-	//	erase_count++;
+	if(size%EF_ERASE_MIN_SIZE != 0)
+		erase_count++;
 #ifdef USE_EEPROM
 	HAL_FLASHEx_DATAEEPROM_Unlock();
-#if 0
+#if 1
 	for (i = 0; i < erase_count*EF_ERASE_MIN_SIZE; i+=4) {
-		flash_status = HAL_FLASHEx_DATAEEPROM_Erase(FLASH_TYPEERASEDATA_WORD, addr + i);
-//		if (flash_status != HAL_OK) {
-//			result = EF_ERASE_ERR;
-//			break;
-//		}
+		retry = 3;
+		while(retry--)
+		{
+			flash_status = HAL_FLASHEx_DATAEEPROM_Erase(FLASH_TYPEERASEDATA_WORD, addr + i);
+			if (flash_status != HAL_OK) {
+				result = EF_ERASE_ERR;
+			} else {
+				result = EF_NO_ERR;
+			}
+		}
 	}
 #else
 	for (i = 0; i < size; i++) {

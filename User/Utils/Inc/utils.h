@@ -27,4 +27,8 @@
 
 #define DATE_AS_INT (((YEAR - 2000) * 12 + MONTH) * 31 + DAY)
 
+
+size_t array_to_string(char *str, uint32_t *value, size_t value_len);
+size_t string_to_array(uint32_t *value, char *str, size_t value_len);
+
 #endif /* UTILS_INC_UTILS_H_ */
