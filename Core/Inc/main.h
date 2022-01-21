@@ -32,14 +32,15 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
+#include <cavan.h>
+#include <cavan/json.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -54,7 +55,7 @@ typedef uint32_t u32;
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-
+void _Error_Handler(uint8_t *file, uint32_t line);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

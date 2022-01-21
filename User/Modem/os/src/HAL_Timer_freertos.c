@@ -22,10 +22,12 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
+
 #include "iot_import.h"
 #include "utils_timer.h"
 
-#define PLATFORM_HAS_TIME_FUNCS
+// #define PLATFORM_HAS_TIME_FUNCS
 #define PLATFORM_HAS_CMSIS
 
 #ifdef PLATFORM_HAS_TIME_FUNCS

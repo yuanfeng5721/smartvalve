@@ -7,6 +7,7 @@
 
 #include "log.h"
 #include "cmsis_os.h"
+#include "iot_msg.h"
 #include "sensors.h"
 #include "sensors_task.h"
 
@@ -18,28 +19,32 @@ osMessageQId sensorsQueueHandle;
 
 void StartSensorsTask(void const * argument)
 {
-	osEvent event;
+	osMsgStatus status;
 	sensors_sample_t *sensors_data = NULL;
+	io_msg_t p_msg;
 	//Sensors_Power(true);
 	while (1) {
-
-//		event = osMessageGet (sensorsQueueHandle, osWaitForever);
-//		if()
-		Sensors_Power(true);
+		if(os_msg_recv(sensorsQueueHandle, &p_msg, osWaitForever) == osEventMessage) {
+			if(p_msg.type == IO_MSG_TYPE_READ_SENSOR) {
+				Sensors_Power(true);
+				osDelay(1000);
+				sensors_data = Sensors_Sample_Data();
+				Sensors_Power(false);
+			}
+		}
 		osDelay(1000);
-		sensors_data = Sensors_Sample_Data();
-		//Sensors_Power(false);
-		osDelay(9000);
 	}
 }
 
-void Sensors_Task_Init(void)
+void SensorsTaskInit(void)
 {
-//	osMessageQDef(sensorsQueue, 16, uint16_t);
-//	sensorsQueueHandle = osMessageCreate(osMessageQ(sensorsQueue), NULL);
-
+	os_msg_create(&sensorsQueueHandle, 4, sizeof(io_msg_t));
 
 	osThreadDef(sensorsTask, StartSensorsTask, SENSORS_TASK_PRIORITY, 0, 256);
 	sensorsTaskHandle = osThreadCreate(osThread(sensorsTask), NULL);
 }
 
+osMessageQId SensorsGetMessageHandle(void)
+{
+	return sensorsQueueHandle;
+}

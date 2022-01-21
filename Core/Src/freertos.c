@@ -24,6 +24,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "iot_msg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -33,6 +34,7 @@
 #include "usart.h"
 #include "sensors_task.h"
 #include "device_nv.h"
+#include "rtc_wakeup.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -115,7 +117,7 @@ void StartModemTask(void const * argument)
 	//modem_init();
 
 	while (1) {
-		//LOGD("hello world!!!\r\n");
+
 		osDelay(2000);
 	}
 }
@@ -224,7 +226,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 256);
+  osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 512);
   modemTaskHandle = osThreadCreate(osThread(modemTask), NULL);
 
   osThreadDef(bleTask, StartBleTask, osPriorityNormal, 0, 256);
@@ -233,7 +235,7 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
   rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
 
-  Sensors_Task_Init();
+  SensorsTaskInit();
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -248,13 +250,30 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  // modem_init();
+  io_msg_t p_msg =
+  {
+	.type = IO_MSG_TYPE_READ_SENSOR,
+	.subtype = 0x1234,
+	.u.buf = "567890",
+  };
+
+  // init nvitem
   init_nvitems();
+
+  //first init modem, sync time
+  modem_init();
+
+  //close modem
+  modem_deinit();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(2000);
-    HAL_IWDG_Refresh(&hiwdg);
+	//check system task, if idle into sleep
+	SleepAndWakeUp(MIN_TO_SECONDS(5));
+//	if(sensorsQueueHandle)
+//		os_msg_send(sensorsQueueHandle, &p_msg, 0);
+	//osDelay(S_TO_TICKS(sleeptime));
+	HAL_IWDG_Refresh(&hiwdg);
   }
   /* USER CODE END StartDefaultTask */
 }

@@ -9,6 +9,7 @@
 #define APPLICATION_INC_SENSORS_TASK_H_
 
 
-void Sensors_Task_Init(void);
+void SensorsTaskInit(void);
+extern osMessageQId sensorsQueueHandle;
 
 #endif /* APPLICATION_INC_SENSORS_TASK_H_ */

@@ -226,6 +226,15 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
+void _Error_Handler(uint8_t *file, uint32_t line)
+{
+	LOGD("_Error_Handler===>FILE:%s, LINE:%d \r\n" , file, line);
+	__disable_irq();
+	while (1)
+	{
+	}
+}
+
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
@@ -239,6 +248,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	LOGD("assert failed===>FILE:%s, LINE:%d \r\n" , file, line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

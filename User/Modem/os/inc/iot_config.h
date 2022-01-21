@@ -21,4 +21,4 @@
 
 //#define DEBUG_USED_CMD_UART
 //#define USING_GNSS
-//#define USING_RTC
+#define USING_RTC

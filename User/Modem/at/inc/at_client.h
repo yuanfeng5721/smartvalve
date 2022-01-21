@@ -29,7 +29,7 @@ extern "C" {
 #define AT_CMD_NAME_LEN 16
 #define AT_END_MARK_LEN 4
 
-#define CLINET_BUFF_LEN          (512)//(1536)
+#define CLINET_BUFF_LEN          (4096)//(1536)
 #define RING_BUFF_LEN            CLINET_BUFF_LEN*2  // uart ring buffer len
 #define GET_CHAR_TIMEOUT_MS      (100)
 #define CMD_RESPONSE_INTERVAL_MS (100)
@@ -148,6 +148,7 @@ void          at_delete_resp(at_response_t resp);
 at_response_t at_resp_set_info(at_response_t resp, uint32_t line_num, uint32_t timeout);
 
 /* AT response line buffer get and parse response buffer arguments */
+int at_recv_readline(at_client_t client);
 const char *at_resp_get_line(at_response_t resp, uint32_t resp_line);
 const char *at_resp_get_line_by_kw(at_response_t resp, const char *keyword);
 int         at_resp_parse_line_args(at_response_t resp, uint32_t resp_line, const char *resp_expr, ...);

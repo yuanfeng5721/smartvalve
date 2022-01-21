@@ -229,7 +229,7 @@ int at_device_op_register(at_device_op_t *device_op)
 {
     int rc;
 
-    if (NULL == sg_at_device_ops) {
+    if (1) { // (NULL == sg_at_device_ops) {
         sg_at_device_ops = device_op;
         rc               = QCLOUD_RET_SUCCESS;
     } else {

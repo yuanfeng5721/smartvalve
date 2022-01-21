@@ -61,7 +61,7 @@ void HAL_Printf(_IN_ const char *fmt, ...)
 	}
 
 #if 1
-	HAL_UART_Transmit(&huart5, buff, length, length * 10);
+	HAL_UART_Transmit(&huart5, buff, length, 0xFFFF);
 #else
 	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
 	HAL_UART_Transmit(&huart4, buff, length, length * 10);

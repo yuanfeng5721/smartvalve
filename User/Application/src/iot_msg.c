@@ -11,11 +11,11 @@
 #include "cmsis_os.h"
 #include "iot_msg.h"
 
-osMsgStatus os_msg_create(os_msg_handle p_handle, uint16_t msg_num, uint16_t msg_size)
+osMsgStatus os_msg_create(os_msg_handle *pp_handle, uint16_t msg_num, uint16_t msg_size)
 {
 	const osMessageQDef_t _os_messageQ_def = { msg_num, msg_size, NULL, NULL};
-	p_handle = osMessageCreate (&_os_messageQ_def, NULL);
-	if(p_handle == NULL)
+	*pp_handle = osMessageCreate (&_os_messageQ_def, NULL);
+	if(*pp_handle == NULL)
 		return osErrorResource;
 	else
 		return osOK;
@@ -25,7 +25,8 @@ osMsgStatus os_msg_recv(os_msg_handle p_handle, io_msg_t *p_msg, uint32_t wait_m
 {
 	osEvent event;
 	event = osMessageGet (p_handle, wait_ms);
-	p_msg = (io_msg_t *)event.value.p;
+	//p_msg = (io_msg_t *)event.value.p;
+	memcpy((void *)p_msg, event.value.p, sizeof(io_msg_t));
 	return event.status;
 }
 

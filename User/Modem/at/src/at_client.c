@@ -24,6 +24,7 @@
 #include "iot_import.h"
 #include "utils_param_check.h"
 #include "utils_timer.h"
+#include "main.h"
 
 #define AT_RESP_END_OK    "OK"
 #define AT_RESP_END_ERROR "ERROR"
@@ -147,6 +148,7 @@ bool at_waitFlag(uint32_t flag, uint32_t timeout)
     bool  Ret = false;
 
     countdown_ms(&timer, timeout);
+
     do {
         //if (flag == (at_getFlag() & flag)) {
 		if (at_getFlag() & flag) {
@@ -588,7 +590,7 @@ static const at_urc *get_urc_obj(at_client_t client)
     return NULL;
 }
 
-static int at_recv_readline(at_client_t client)
+int at_recv_readline(at_client_t client)
 {
     int  read_len = 0;
     char ch = 0, last_ch = 0;

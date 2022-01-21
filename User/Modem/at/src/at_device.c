@@ -62,7 +62,7 @@ int modem_init(void)
     int rc;
 
 	if(device_has_initialled) {
-		Log_i("at device has been initialled!!!");
+		// Log_i("at device has been initialled!!!");
 		return QCLOUD_RET_SUCCESS;
 	}
 		

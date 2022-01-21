@@ -22,7 +22,7 @@
 #include "iot_import.h"
 #include "utils_param_check.h"
 
-static char send_buf[CLINET_BUFF_LEN];
+static char send_buf[512];
 static int  last_cmd_len = 0;
 
 /**
@@ -35,10 +35,10 @@ static int  last_cmd_len = 0;
 void at_print_raw_cmd(const char *name, const char *buf, int size)
 {
     int i;
-	char str[128];
+	static char str[512];
 	
 	for(i=0; i<size; i++) {
-		snprintf(str+i,128-i,"%c", __is_print(buf[i]) ? buf[i] : '.');
+		snprintf(str+i,sizeof(str)-i,"%c", __is_print(buf[i]) ? buf[i] : '.');
 	}
 	HAL_Printf("%s: %s\n\r",name,str);
 }
