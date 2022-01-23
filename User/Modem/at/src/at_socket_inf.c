@@ -450,3 +450,13 @@ int at_socket_get_info(ue_info *pInfo)
 	
 	return at_op->get_info(pInfo);
 }
+
+int at_socket_ntp(time_t *t)
+{
+	at_device_op_t *at_op = _at_device_op_get();
+    POINTER_SANITY_CHECK(at_op, QCLOUD_ERR_INVAL);
+    POINTER_SANITY_CHECK(at_op->ntp, QCLOUD_ERR_INVAL);
+
+	return at_op->ntp(t);
+}
+

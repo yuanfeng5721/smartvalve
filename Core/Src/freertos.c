@@ -261,7 +261,11 @@ void StartDefaultTask(void const * argument)
   init_nvitems();
 
   //first init modem, sync time
-  modem_init();
+  if(!modem_init())
+  {
+	  //sync net time
+	  modem_ntp(NULL);
+  }
 
   //close modem
   modem_deinit();
@@ -270,8 +274,9 @@ void StartDefaultTask(void const * argument)
   {
 	//check system task, if idle into sleep
 	SleepAndWakeUp(MIN_TO_SECONDS(5));
-//	if(sensorsQueueHandle)
-//		os_msg_send(sensorsQueueHandle, &p_msg, 0);
+	os_msg_send(sensorsQueueHandle, &p_msg, 0);
+	//wait sample data and send to onenet
+
 	//osDelay(S_TO_TICKS(sleeptime));
 	HAL_IWDG_Refresh(&hiwdg);
   }

@@ -56,6 +56,7 @@ typedef struct sockaddr{
 int modem_init(void);
 int modem_deinit(void);
 int at_device_get_info(ue_info *pInfo);
+int modem_ntp(time_t *t);
 
 /*socket api*/
 size_t  socket_read(int fd, unsigned char *data, size_t datalen, uint32_t timeout_ms);

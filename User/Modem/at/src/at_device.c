@@ -113,6 +113,11 @@ int modem_get_info(ue_info *pInfo)
 	return rc;
 }
 
+int modem_ntp(time_t *t)
+{
+	return at_socket_ntp(t);
+}
+
 int socket_connect(const sockaddr_t *addr)
 {
     POINTER_SANITY_CHECK(addr, QCLOUD_ERR_INVAL);

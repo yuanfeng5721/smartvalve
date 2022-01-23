@@ -1065,47 +1065,6 @@ static int ml302_init(void)
 
 		at_delayms(100);
 
-#ifdef USING_RTC
-		{
-			/* get real time */
-			volatile int year, month, day, hour, min, sec;
-			char str_timezone[5] = {0};
-			volatile int timezone = 0;
-			
-//			at_obj_exec_cmd(resp, "AT+CLTS=1");
-//			at_delayms(2000);
-			for (i = 0; i < CCLK_RETRY; i++)
-			{
-				if (at_obj_exec_cmd(resp, "AT+CCLK?") < 0)
-				{
-					at_delayms(500);
-					continue;
-				}
-
-				/* +CCLK: "18/12/22,18:33:12+32" */
-				if (at_resp_parse_line_args_by_kw(resp, "+CCLK:", "+CCLK: \"%d/%d/%d,%d:%d:%d%s",
-												  &year, &month, &day, &hour, &min, &sec, str_timezone) < 0)
-				{
-					at_delayms(500);
-					continue;
-				}
-				timezone = atoi(str_timezone)/4;
-				//set_date(year + 2000, month, day);
-				//set_time(hour, min, sec);
-				//set_data_time(year, month, day, hour, min, sec, timezone);
-				set_local_time(make_data_time(year, month, day, hour, min, sec, timezone));
-				break;
-			}
-
-			if (i == CCLK_RETRY)
-			{
-				Log_e("%s device GPRS attach failed.", DEVICE_NAME);
-				ret = QCLOUD_ERR_FAILURE;
-				goto __exit;
-			}
-		}
-#endif /* USING_RTC */
-
 //		if (!ml302_init_MQTT(resp, 3)) {
 //			ret = QCLOUD_ERR_FAILURE;
 //			goto __exit;
@@ -1135,6 +1094,66 @@ static int ml302_init(void)
 	Log_d("ret = %d", ret);
 	
     return ret;
+}
+
+static int ml302_ntp(time_t *t)
+{
+	at_response_t resp = NULL;
+	int           ret;
+	int           i;
+
+	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto __exit;
+	}
+
+#ifdef USING_RTC
+	{
+		/* get real time */
+		volatile int year, month, day, hour, min, sec;
+		char str_timezone[5] = {0};
+		volatile int timezone = 0;
+
+		for (i = 0; i < CCLK_RETRY; i++)
+		{
+			if (at_obj_exec_cmd(resp, "AT+CCLK?") < 0)
+			{
+				at_delayms(500);
+				continue;
+			}
+
+			/* +CCLK: "18/12/22,18:33:12+32" */
+			if (at_resp_parse_line_args_by_kw(resp, "+CCLK:", "+CCLK: \"%d/%d/%d,%d:%d:%d%s",
+											  &year, &month, &day, &hour, &min, &sec, str_timezone) < 0)
+			{
+				at_delayms(500);
+				continue;
+			}
+			timezone = atoi(str_timezone)/4;
+
+			set_local_time(make_data_time(year, month, day, hour, min, sec, timezone));
+			break;
+		}
+
+		if (i == CCLK_RETRY)
+		{
+			Log_e("%s device GPRS attach failed.", DEVICE_NAME);
+			ret = QCLOUD_ERR_FAILURE;
+			goto __exit;
+		}
+	}
+#endif /* USING_RTC */
+ __exit:
+
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+	Log_d("ret = %d", ret);
+
+	return ret;
 }
 
 static int ml302_deinit(void)
@@ -1482,6 +1501,7 @@ at_device_op_t at_ops_ml302 = {
     .recv_timeout = ml302_recv_timeout,
     .close        = ml302_close,
     .parse_domain = ml302_parse_domain,
+	.ntp		  = ml302_ntp,
     .set_event_cb = ml302_set_event_cb,
     .deviceName   = "ml302",
 };

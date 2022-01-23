@@ -75,6 +75,7 @@ typedef struct {
     int (*recv_timeout)(int fd, void *buf, size_t len, uint32_t timeout);
     int (*close)(int fd);
     void (*set_event_cb)(at_socket_evt_t event, at_evt_cb_t cb);
+    int (*ntp)(time_t *t);
     char *deviceName;
 } at_device_op_t;
 
@@ -104,4 +105,5 @@ int at_socket_close(int fd);
 int at_socket_send(int fd, const void *buf, size_t len);
 int at_socket_recv(int fd, void *buf, size_t len);
 int at_socket_get_info(ue_info *pInfo);
+int at_socket_ntp(time_t *t);
 #endif
