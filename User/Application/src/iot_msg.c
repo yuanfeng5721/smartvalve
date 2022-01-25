@@ -8,6 +8,7 @@
 #include "log.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "cmsis_os.h"
 #include "iot_msg.h"
 

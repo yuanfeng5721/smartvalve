@@ -187,7 +187,45 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void SystemPower_Config(void)
+{
+    //使能低功耗模式时钟
+	__HAL_RCC_PWR_CLK_ENABLE();
+	//关闭所有IO口时钟
+	__HAL_RCC_GPIOA_CLK_DISABLE();
+	__HAL_RCC_GPIOB_CLK_DISABLE();
+	__HAL_RCC_GPIOC_CLK_DISABLE();
+	__HAL_RCC_GPIOD_CLK_DISABLE();
+	__HAL_RCC_GPIOH_CLK_DISABLE();
+	__HAL_RCC_GPIOE_CLK_DISABLE();
+}
 
+void System_Reinit(void)
+{
+	//HAL_Init();
+
+	/* Configure the system clock */
+	SystemClock_Config();
+
+	/* Initialize all configured peripherals */
+//	MX_GPIO_Init();
+//	MX_DMA_Init();
+//	MX_UART5_Init();
+//	MX_USART1_UART_Init();
+//	MX_USART3_UART_Init();
+//	MX_UART4_Init();
+//	MX_USART2_UART_Init();
+//	MX_ADC_Init();
+//	MX_I2C1_Init();
+//	MX_RTC_Init();
+//	MX_TIM3_Init();
+//	MX_TIM2_Init();
+//	MX_TIM6_Init();
+//	MX_TIM7_Init();
+//	//MX_IWDG_Init();
+//
+//	log_init();
+}
 /* USER CODE END 4 */
 
 /**

@@ -24,12 +24,13 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "iot_msg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #define LOG_TAG "freertos"
 #include "log.h"
+#include "iot_msg.h"
+#include "iot_event.h"
 #include "at_device.h"
 #include "usart.h"
 #include "sensors_task.h"
@@ -235,6 +236,8 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
   rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
 
+  globle_event_init();
+
   SensorsTaskInit();
   /* USER CODE END RTOS_THREADS */
 
@@ -261,22 +264,33 @@ void StartDefaultTask(void const * argument)
   init_nvitems();
 
   //first init modem, sync time
-  if(!modem_init())
-  {
-	  //sync net time
-	  modem_ntp(NULL);
-  }
-
-  //close modem
-  modem_deinit();
+//  if(!modem_init())
+//  {
+//	  //sync net time
+//	  modem_ntp(NULL);
+//  }
+//
+//  //close modem
+//  modem_deinit();
+  set_local_time(make_data_time(22, 1, 24, 15, 20, 0, 0));
   /* Infinite loop */
   for(;;)
   {
 	//check system task, if idle into sleep
-	SleepAndWakeUp(MIN_TO_SECONDS(5));
-	os_msg_send(sensorsQueueHandle, &p_msg, 0);
-	//wait sample data and send to onenet
+	SleepAndWakeUp(MIN_TO_SECONDS(1));
 
+	//send sensor sample message
+	os_msg_send(sensorsQueueHandle, &p_msg, 0);
+	//wait sample task complete
+	if(os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60)) != IO_EVT_TYPE_SENSORS_COMPLETE)
+	{
+		LOGE("some task exec error\r\n");
+	}
+	else
+	{
+		//wait send task complete
+		LOGI("sensor sample ok, next task run\r\n");
+	}
 	//osDelay(S_TO_TICKS(sleeptime));
 	HAL_IWDG_Refresh(&hiwdg);
   }

@@ -126,7 +126,17 @@ void SleepAndWakeUp(uint32_t interval_s)
 	sleeptime = calc_wakeup_time(NULL, interval_s);
 	MX_RTC_Wakeup_Start(sleeptime);
 	LOGD("into sleep!!!!!!\r\n");
+	SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
+	SysTick->CTRL  = 0;
+	//HAL_SuspendTick();
+	//SystemPower_Config();
 	HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
+	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
+				   SysTick_CTRL_TICKINT_Msk   |
+				   SysTick_CTRL_ENABLE_Msk;
+	//HAL_ResumeTick();
+	//System_Reinit();
 	SystemClock_Config();
 	MX_RTC_Wakeup_Stop();
 	LOGD("wakeup!!!!!!\r\n");

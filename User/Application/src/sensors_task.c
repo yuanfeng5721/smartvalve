@@ -10,6 +10,8 @@
 #include "iot_msg.h"
 #include "sensors.h"
 #include "sensors_task.h"
+#include "iot_event.h"
+
 
 #define SENSORS_TASK_PRIORITY      (osPriorityNormal+1)
 
@@ -30,6 +32,7 @@ void StartSensorsTask(void const * argument)
 				osDelay(1000);
 				sensors_data = Sensors_Sample_Data();
 				Sensors_Power(false);
+				os_event_set(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
 			}
 		}
 		osDelay(1000);

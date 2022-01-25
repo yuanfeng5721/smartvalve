@@ -26,7 +26,7 @@
  *  
  *----------------------------------------------------------------------------
  *
- * Portions Copyright © 2016 STMicroelectronics International N.V. All rights reserved.
+ * Portions Copyright ï¿½ 2016 STMicroelectronics International N.V. All rights reserved.
  * Portions Copyright (c) 2013 ARM LIMITED
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -131,6 +131,16 @@ static int inHandlerMode (void)
 {
   return __get_IPSR() != 0;
 }
+
+static int IS_IRQ (void)
+{
+  return __get_IPSR() != 0;
+}
+
+/* Limits */
+#define MAX_BITS_EVENT_GROUPS     24U
+
+#define EVENT_FLAGS_INVALID_BITS  (~((1UL << MAX_BITS_EVENT_GROUPS) - 1U))
 
 /*********************** Kernel Control Functions *****************************/
 /**
@@ -1725,3 +1735,153 @@ uint32_t osSemaphoreGetCount(osSemaphoreId semaphore_id)
 {
   return uxSemaphoreGetCount(semaphore_id);
 }
+
+/*---------------------------------------------------------------------------*/
+osEventFlagsId_t osEventFlagsNew (void) {
+  EventGroupHandle_t hEventGroup;
+
+  hEventGroup = NULL;
+
+  if (!IS_IRQ()) {
+        hEventGroup = xEventGroupCreate();
+  }
+
+  return ((osEventFlagsId_t)hEventGroup);
+}
+
+uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags) {
+  EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
+  uint32_t rflags;
+  BaseType_t yield;
+
+  if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
+    rflags = (uint32_t)osErrorParameter;
+  }
+  else if (IS_IRQ()) {
+#if	 INCLUDE_xTimerPendFunctionCall
+    yield = pdFALSE;
+
+    if (xEventGroupSetBitsFromISR (hEventGroup, (EventBits_t)flags, &yield) != pdFAIL) {
+      rflags = (uint32_t)osErrorResource;
+    } else {
+      rflags = flags;
+      portYIELD_FROM_ISR (yield);
+    }
+#else
+    rflags = (uint32_t)osErrorParameter;
+#endif
+  }
+  else {
+    rflags = xEventGroupSetBits (hEventGroup, (EventBits_t)flags);
+  }
+
+  return (rflags);
+}
+
+uint32_t osEventFlagsClear (osEventFlagsId_t ef_id, uint32_t flags) {
+  EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
+  uint32_t rflags;
+
+  if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
+    rflags = (uint32_t)osErrorParameter;
+  }
+  else if (IS_IRQ()) {
+    rflags = xEventGroupGetBitsFromISR (hEventGroup);
+
+    if (xEventGroupClearBitsFromISR (hEventGroup, (EventBits_t)flags) == pdFAIL) {
+      rflags = (uint32_t)osErrorResource;
+    }
+  }
+  else {
+    rflags = xEventGroupClearBits (hEventGroup, (EventBits_t)flags);
+  }
+
+  return (rflags);
+}
+
+uint32_t osEventFlagsGet (osEventFlagsId_t ef_id) {
+  EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
+  uint32_t rflags;
+
+  if (ef_id == NULL) {
+    rflags = 0U;
+  }
+  else if (IS_IRQ()) {
+    rflags = xEventGroupGetBitsFromISR (hEventGroup);
+  }
+  else {
+    rflags = xEventGroupGetBits (hEventGroup);
+  }
+
+  return (rflags);
+}
+
+uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t options, uint32_t timeout) {
+  EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
+  BaseType_t wait_all;
+  BaseType_t exit_clr;
+  uint32_t rflags;
+
+  if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
+    rflags = (uint32_t)osErrorParameter;
+  }
+  else if (IS_IRQ()) {
+    rflags = (uint32_t)osErrorISR;
+  }
+  else {
+    if (options & osFlagsWaitAll) {
+      wait_all = pdTRUE;
+    } else {
+      wait_all = pdFAIL;
+    }
+
+    if (options & osFlagsNoClear) {
+      exit_clr = pdFAIL;
+    } else {
+      exit_clr = pdTRUE;
+    }
+
+    rflags = xEventGroupWaitBits (hEventGroup, (EventBits_t)flags, exit_clr, wait_all, (TickType_t)timeout);
+
+    if (options & osFlagsWaitAll) {
+      if (flags != rflags) {
+        if (timeout > 0U) {
+          rflags = (uint32_t)osErrorTimeout;
+        } else {
+          rflags = (uint32_t)osErrorResource;
+        }
+      }
+    }
+    else {
+      if ((flags & rflags) == 0U) {
+        if (timeout > 0U) {
+          rflags = (uint32_t)osErrorTimeout;
+        } else {
+          rflags = (uint32_t)osErrorResource;
+        }
+      }
+    }
+  }
+
+  return (rflags);
+}
+
+osStatus_t osEventFlagsDelete (osEventFlagsId_t ef_id) {
+  EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
+  osStatus_t stat;
+
+  if (IS_IRQ()) {
+    stat = osErrorISR;
+  }
+  else if (hEventGroup == NULL) {
+    stat = osErrorParameter;
+  }
+  else {
+    stat = osOK;
+    vEventGroupDelete (hEventGroup);
+  }
+
+  return (stat);
+}
+
+

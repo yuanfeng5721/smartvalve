@@ -26,7 +26,7 @@
  *  
  *----------------------------------------------------------------------------
  *
- * Portions Copyright © 2016 STMicroelectronics International N.V. All rights reserved.
+ * Portions Copyright ï¿½ 2016 STMicroelectronics International N.V. All rights reserved.
  * Portions Copyright (c) 2013 ARM LIMITED
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -184,6 +184,11 @@ typedef enum  {
 /// \note MUST REMAIN UNCHANGED: \b osWaitForever shall be consistent in every CMSIS-RTOS.
 #define osWaitForever     0xFFFFFFFF     ///< wait forever timeout value
 
+// Flags options (\ref osThreadFlagsWait and \ref osEventFlagsWait).
+#define osFlagsWaitAny        0x00000000U ///< Wait for any flag (default).
+#define osFlagsWaitAll        0x00000001U ///< Wait for all flags.
+#define osFlagsNoClear        0x00000002U ///< Do not clear flags which have been specified to wait for.
+
 /// Status code values returned by CMSIS-RTOS functions.
 /// \note MUST REMAIN UNCHANGED: \b osStatus shall be consistent in every CMSIS-RTOS.
 typedef enum  {
@@ -194,6 +199,7 @@ typedef enum  {
   osEventTimeout          =  0x40,       ///< function completed; timeout occurred.
   osErrorParameter        =  0x80,       ///< parameter error: a mandatory parameter was missing or specified an incorrect object.
   osErrorResource         =  0x81,       ///< resource not available: a specified resource was not available.
+  osErrorTimeout           = 0x82,       ///< Operation not completed within the timeout period.
   osErrorTimeoutResource  =  0xC1,       ///< resource not available within given time: a specified resource was not available within the timeout period.
   osErrorISR              =  0x82,       ///< not allowed in ISR context: the function cannot be called from interrupt service routines.
   osErrorISRRecursive     =  0x83,       ///< function called multiple times from ISR with same object.
@@ -203,6 +209,8 @@ typedef enum  {
   osErrorOS               =  0xFF,       ///< unspecified RTOS error: run-time error but no other error message fits.
   os_status_reserved      =  0x7FFFFFFF  ///< prevent from enum down-size compiler optimization.
 } osStatus;
+
+typedef osStatus osStatus_t;
 
 #if ( INCLUDE_eTaskGetState == 1 )
 /* Thread state returned by osThreadGetState */
@@ -261,6 +269,8 @@ typedef QueueHandle_t osMessageQId;
 /// \note CAN BE CHANGED: \b os_mailQ_cb is implementation specific in every CMSIS-RTOS.
 typedef struct os_mailQ_cb *osMailQId;
 
+/// \details Event Flags ID identifies the event flags.
+typedef EventGroupHandle_t osEventFlagsId_t;
 
 #if( configSUPPORT_STATIC_ALLOCATION == 1 )
 
@@ -1018,6 +1028,44 @@ osStatus osRecursiveMutexWait (osMutexId mutex_id, uint32_t millisec);
 * @retval  count value
 */
 uint32_t osSemaphoreGetCount(osSemaphoreId semaphore_id);
+
+
+//  ==== Event Flags Management Functions ====
+
+/// Create and Initialize an Event Flags object.
+/// \param[in]     attr          event flags attributes; NULL: default values.
+/// \return event flags ID for reference by other functions or NULL in case of error.
+osEventFlagsId_t osEventFlagsNew (void);
+
+/// Set the specified Event Flags.
+/// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
+/// \param[in]     flags         specifies the flags that shall be set.
+/// \return event flags after setting or error code if highest bit set.
+uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags);
+
+/// Clear the specified Event Flags.
+/// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
+/// \param[in]     flags         specifies the flags that shall be cleared.
+/// \return event flags before clearing or error code if highest bit set.
+uint32_t osEventFlagsClear (osEventFlagsId_t ef_id, uint32_t flags);
+
+/// Get the current Event Flags.
+/// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
+/// \return current event flags.
+uint32_t osEventFlagsGet (osEventFlagsId_t ef_id);
+
+/// Wait for one or more Event Flags to become signaled.
+/// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
+/// \param[in]     flags         specifies the flags to wait for.
+/// \param[in]     options       specifies flags options (osFlagsXxxx).
+/// \param[in]     timeout       \ref CMSIS_RTOS_TimeOutValue or 0 in case of no time-out.
+/// \return event flags before clearing or error code if highest bit set.
+uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t options, uint32_t timeout);
+
+/// Delete an Event Flags object.
+/// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
+/// \return status code that indicates the execution status of the function.
+osStatus_t osEventFlagsDelete (osEventFlagsId_t ef_id);
 
 #ifdef  __cplusplus
 }
