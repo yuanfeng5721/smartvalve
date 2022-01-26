@@ -35,7 +35,7 @@ static int  last_cmd_len = 0;
 void at_print_raw_cmd(const char *name, const char *buf, int size)
 {
     int i;
-	static char str[512];
+	static char str[550];
 	
 	for(i=0; i<size; i++) {
 		snprintf(str+i,sizeof(str)-i,"%c", __is_print(buf[i]) ? buf[i] : '.');

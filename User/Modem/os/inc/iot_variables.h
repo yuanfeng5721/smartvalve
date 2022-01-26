@@ -48,7 +48,7 @@
 
 /* log print/upload related variables */
 /* MAX size of log buffer for one log item including header and content */
-#define MAX_LOG_MSG_LEN (256)
+#define MAX_LOG_MSG_LEN (512)
 
 #if defined(__linux__)
 #undef MAX_LOG_MSG_LEN

@@ -94,11 +94,13 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s)
 	if(interval_s<60)
 	{
 		t1=time(NULL);
+		t1 += interval_s;
+		if(t != NULL)
+			*t = t1;
 		gt = localtime(&t1);
-		gt->tm_sec += interval_s;
 		strftime(buf, 20, "%Y-%m-%d %H:%M:%S", gt);
 		LOGD("next wakeup time: %s!!!!\r\n",buf);
-		sleeptime = interval_s;
+		sleeptime = interval_s+2;
 	}
 	else
 	{
@@ -113,17 +115,18 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s)
 		strftime(buf, 20, "%Y-%m-%d %H:%M:%S", gt);
 		LOGD("next wakeup time: %s!!!!\r\n",buf);
 		t1=time(NULL);
-		sleeptime = t2-t1;
+		sleeptime = t2-t1+2;
 	}
 	LOGD("sleep time: time=%ds\r\n",sleeptime);
 
 	return sleeptime;
 }
 
-void SleepAndWakeUp(uint32_t interval_s)
+time_t SleepAndWakeUp(uint32_t interval_s)
 {
 	uint32_t sleeptime;
-	sleeptime = calc_wakeup_time(NULL, interval_s);
+	time_t next_time;
+	sleeptime = calc_wakeup_time(&next_time, interval_s);
 	MX_RTC_Wakeup_Start(sleeptime);
 	LOGD("into sleep!!!!!!\r\n");
 	SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
@@ -140,4 +143,5 @@ void SleepAndWakeUp(uint32_t interval_s)
 	SystemClock_Config();
 	MX_RTC_Wakeup_Stop();
 	LOGD("wakeup!!!!!!\r\n");
+	return next_time;
 }

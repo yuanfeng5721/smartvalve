@@ -115,3 +115,13 @@ void cavan_mqtt_append_property(cavan_json_t *json, const char *name, const char
 	cavan_json_end(json);
 }
 
+void cavan_mqtt_append_property2(cavan_json_t *json, const char *name, const char *format, ...)
+{
+	va_list ap;
+
+	cavan_json_append_name(json, name);
+
+	va_start(ap, format);
+	cavan_json_vprintf(json, format, ap);
+	va_end(ap);
+}

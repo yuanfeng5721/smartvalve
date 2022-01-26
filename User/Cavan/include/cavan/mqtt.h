@@ -42,3 +42,22 @@ static inline void cavan_mqtt_append_text(cavan_json_t *json, const char *name, 
 	cavan_mqtt_append_property(json, name, "\"%s\"", value);
 }
 
+static inline void cavan_mqtt_append_int2(cavan_json_t *json, const char *name, int value)
+{
+	cavan_mqtt_append_property2(json, name, "%d", value);
+}
+
+static inline void cavan_mqtt_append_float2(cavan_json_t *json, const char *name, float value)
+{
+	cavan_mqtt_append_property2(json, name, "%.2f", value);
+}
+
+static inline void cavan_mqtt_append_text2(cavan_json_t *json, const char *name, const char *value)
+{
+	cavan_mqtt_append_property2(json, name, "\"%s\"", value);
+}
+
+static inline void cavan_mqtt_append_dot(cavan_json_t *json)
+{
+	cavan_json_append(json, ',');
+}

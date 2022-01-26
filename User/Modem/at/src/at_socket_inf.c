@@ -460,3 +460,29 @@ int at_socket_ntp(time_t *t)
 	return at_op->ntp(t);
 }
 
+int at_mqtt_connect(const char *clientid, const char *username, const char *passwd)
+{
+	at_device_op_t *at_op = _at_device_op_get();
+    POINTER_SANITY_CHECK(at_op, QCLOUD_ERR_INVAL);
+    POINTER_SANITY_CHECK(at_op->mqtt_connect, QCLOUD_ERR_INVAL);
+
+	return at_op->mqtt_connect(clientid, username, passwd);
+}
+
+int at_mqtt_publish(const char *topic, const void *buff, uint16_t length)
+{
+	at_device_op_t *at_op = _at_device_op_get();
+	POINTER_SANITY_CHECK(at_op, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(at_op->mqtt_publish, QCLOUD_ERR_INVAL);
+
+	return at_op->mqtt_publish(topic, buff, length);
+}
+
+int at_mqtt_disconnect(void)
+{
+	at_device_op_t *at_op = _at_device_op_get();
+	POINTER_SANITY_CHECK(at_op, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(at_op->mqtt_disconnect, QCLOUD_ERR_INVAL);
+
+	return at_op->mqtt_disconnect();
+}

@@ -76,6 +76,10 @@ typedef struct {
     int (*close)(int fd);
     void (*set_event_cb)(at_socket_evt_t event, at_evt_cb_t cb);
     int (*ntp)(time_t *t);
+    int (*mqtt_connect)(const char *clientid, const char *username, const char *passwd);
+    int (*mqtt_publish)(const char *topic, const void *buff, uint16_t length);
+    //int (*mqtt_evnet_handle)();
+    int (*mqtt_disconnect)(void);
     char *deviceName;
 } at_device_op_t;
 
@@ -106,4 +110,9 @@ int at_socket_send(int fd, const void *buf, size_t len);
 int at_socket_recv(int fd, void *buf, size_t len);
 int at_socket_get_info(ue_info *pInfo);
 int at_socket_ntp(time_t *t);
+
+// at mqtt api
+int at_mqtt_connect(const char *clientid, const char *username, const char *passwd);
+int at_mqtt_publish(const char *topic, const void *buff, uint16_t length);
+int at_mqtt_disconnect(void);
 #endif

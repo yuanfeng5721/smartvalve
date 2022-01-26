@@ -223,7 +223,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityAboveNormal, 0, 512);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityAboveNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -239,6 +239,7 @@ void MX_FREERTOS_Init(void) {
   globle_event_init();
 
   SensorsTaskInit();
+  DataProcessTaskInit();
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -253,45 +254,12 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  io_msg_t p_msg =
-  {
-	.type = IO_MSG_TYPE_READ_SENSOR,
-	.subtype = 0x1234,
-	.u.buf = "567890",
-  };
 
-  // init nvitem
-  init_nvitems();
-
-  //first init modem, sync time
-//  if(!modem_init())
-//  {
-//	  //sync net time
-//	  modem_ntp(NULL);
-//  }
-//
-//  //close modem
-//  modem_deinit();
-  set_local_time(make_data_time(22, 1, 24, 15, 20, 0, 0));
   /* Infinite loop */
   for(;;)
   {
 	//check system task, if idle into sleep
-	SleepAndWakeUp(MIN_TO_SECONDS(1));
-
-	//send sensor sample message
-	os_msg_send(sensorsQueueHandle, &p_msg, 0);
-	//wait sample task complete
-	if(os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60)) != IO_EVT_TYPE_SENSORS_COMPLETE)
-	{
-		LOGE("some task exec error\r\n");
-	}
-	else
-	{
-		//wait send task complete
-		LOGI("sensor sample ok, next task run\r\n");
-	}
-	//osDelay(S_TO_TICKS(sleeptime));
+	osDelay(100);
 	HAL_IWDG_Refresh(&hiwdg);
   }
   /* USER CODE END StartDefaultTask */

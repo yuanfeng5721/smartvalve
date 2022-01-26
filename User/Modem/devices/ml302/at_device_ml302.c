@@ -29,6 +29,7 @@
 #include "log.h"
 #include "utils_timer.h"
 #include "rtc_wakeup.h"
+#include "board.h"
 
 //#define USING_RTC
 
@@ -57,6 +58,8 @@ static int ml302_rssi;
 static int ml302_ber;
 static u32 ml302_msgid;
 static cavan_json_t ml302_send_json;
+
+static mqtt_clinet_t g_mqtt_clinet;
 
 static const char mqtt_cert[] =
 	"-----BEGIN CERTIFICATE-----\n"
@@ -725,8 +728,24 @@ bool cavan_wait_conn_complete(u32 timeout)
 bool cavan_wait_send_complete(u32 timeout)
 {
 	bool success = at_waitFlag(NET_INPUT_FLAG, timeout);
+
 	cavan_net_input_clear();
 	return success;
+}
+
+bool cavan_wait_pub_complete(u32 timeout)
+{
+	if (at_waitFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG, timeout)) {
+		if (at_waitFlag(MQTT_FAIL_FLAG, 100)) {
+			Log_e("connect fail!!!");
+			return false;
+		}
+	} else {
+		Log_e("connect timeout!!!");
+		return false;
+	}
+
+	return true;
 }
 
 bool cavan_send_MSSLCFG(at_response_t rsp, u8 times)
@@ -1491,18 +1510,154 @@ __exit:
 	return ret;
 }
 
+static bool mqtt_connect(at_response_t resp, const char *clientid, const char *username, const char *passwd)
+{
+	char token[200];
+
+	memset(g_mqtt_clinet.clientid, 0, sizeof(g_mqtt_clinet.clientid));
+	memset(g_mqtt_clinet.username, 0, sizeof(g_mqtt_clinet.username));
+
+	strcpy(g_mqtt_clinet.clientid, clientid);
+	strcpy(g_mqtt_clinet.username, username);
+
+	cavan_mqtt_token(username, passwd, clientid, token, sizeof(token));
+
+	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
+	at_exec_cmd(resp, "AT+MMQTTCON=%d,\"%s\",%d,\"%s\",\"%s\",\"%s\"",
+		MQTT_CONN, MQTT_HOST, MQTT_PORT, clientid, username, token);
+
+	return cavan_wait_conn_complete(AT_RESP_TIMEOUT_MS);
+}
+
+static int ml302_mqtt_connect(const char *clientid, const char *username, const char *passwd)
+{
+	at_response_t resp = NULL;
+	int           ret;
+	uint8_t 	  times = 3;
+
+	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto exit;
+	}
+
+	if (!cavan_send_MSSLCFG(resp, 10)) {
+		ret = QCLOUD_ERR_SSL_INIT;
+		goto exit;
+	}
+
+	at_delayms(100);
+
+	if (!cavan_send_MSSLCTXCFG(resp, 10)) {
+		ret = QCLOUD_ERR_SSL_CERT;
+		goto exit;
+	}
+
+	at_delayms(100);
+
+	while (1) {
+		if (mqtt_connect(resp, clientid, username, passwd)) {
+			ret = QCLOUD_RET_SUCCESS;
+			break;
+		}
+
+		if (times < 1) {
+			ret = QCLOUD_ERR_MQTT_NO_CONN;
+			goto exit;
+		}
+
+		cavan_send_MMQTTDISCON(resp);
+		times--;
+	}
+
+exit:
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+	return ret;
+}
+
+static int ml302_mqtt_pub(const char *topic, const void *buff, u16 length)
+{
+	at_response_t resp = NULL;
+	int           ret;
+
+	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto exit;
+	}
+
+	ml302_msgid++;
+
+	at_clearFlag(NET_INPUT_FLAG);
+	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
+
+	cavan_net_input_set(buff, length);
+	//$sys/{pid}/{device-name}/dp/post/json
+	at_exec_cmd(resp, "AT+MMQTTPUB=0,\"$sys/%s/%s/%s\",%d", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic, cavan_net_input_length);
+
+	if(cavan_wait_send_complete(2000) && cavan_wait_pub_complete(2000) /*&& at_resp_get_line_by_kw(resp, "+MMQTTPUB:")*/) {
+		ret = QCLOUD_RET_SUCCESS;
+	} else {
+		ret = QCLOUD_ERR_MQTT_PUB_FAIL;
+	}
+
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+exit:
+	return ret;
+}
+
+static int ml302_mqtt_disconnect(void)
+{
+	at_response_t resp = NULL;
+	int           ret;
+
+	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto exit;
+	}
+
+	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
+	at_exec_cmd(resp, "AT+MMQTTDISCON=%d", MQTT_CONN);
+
+	if(cavan_wait_conn_complete(500)) {
+		ret = QCLOUD_RET_SUCCESS;
+	} else {
+		ret = QCLOUD_ERR_MQTT_DISCONN_FAIL;
+	}
+
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+exit:
+	return ret;
+}
+
 at_device_op_t at_ops_ml302 = {
-    .init         = ml302_init,
-	.deinit       = ml302_deinit,
-	.power		  = ml302_power,
-	.get_info     = ml302_query_info,
-    .connect      = ml302_connect,
-    .send         = ml302_send,
-    .recv_timeout = ml302_recv_timeout,
-    .close        = ml302_close,
-    .parse_domain = ml302_parse_domain,
-	.ntp		  = ml302_ntp,
-    .set_event_cb = ml302_set_event_cb,
+    .init            = ml302_init,
+	.deinit          = ml302_deinit,
+	.power		     = ml302_power,
+	.get_info        = ml302_query_info,
+    .connect         = ml302_connect,
+    .send            = ml302_send,
+    .recv_timeout    = ml302_recv_timeout,
+    .close           = ml302_close,
+    .parse_domain    = ml302_parse_domain,
+	.ntp		     = ml302_ntp,
+    .set_event_cb    = ml302_set_event_cb,
+	.mqtt_connect    = ml302_mqtt_connect,
+	.mqtt_publish    = ml302_mqtt_pub,
+	.mqtt_disconnect = ml302_mqtt_disconnect,
     .deviceName   = "ml302",
 };
 
@@ -1567,4 +1722,10 @@ char *at_device_get_imei(void)
 	else
 		return NULL;
 }
+
+int at_device_get_rssi(void)
+{
+	return ml302_rssi;
+}
+
 #endif /*AT_DEVICE_ML302*/

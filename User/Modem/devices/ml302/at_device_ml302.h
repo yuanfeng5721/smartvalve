@@ -11,6 +11,7 @@
 
 #ifndef __AT_DEVICE_ML302_H__
 #define __AT_DEVICE_ML302_H__
+#include <stdint.h>
 
 #ifdef AT_DEVICE_ML302
 
@@ -19,7 +20,11 @@
 #define ML302_SEND_MAX_LEN_ONCE (256)
 #define ML302_MAX_SOCKET_NUM    (5)
 
-
+typedef struct{
+	uint8_t mqtt_conn_id;
+	char clientid[12];
+	char username[12];
+}mqtt_clinet_t;
 
 int at_device_ml302_init(void);
 char *at_device_get_imei(void);

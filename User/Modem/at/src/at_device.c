@@ -241,5 +241,58 @@ int socket_disconnect(int fd)
 
     return rc;
 }
+/**
+  * @brief  connect mqtt server
+  * @param  clientid : device name
+  * 		username : product id
+  * 		passwd   : device key
+  * @retval None
+  */
+int mqtt_connect(const char *clientid, const char *username, const char *passwd)
+{
+	STRING_PTR_SANITY_CHECK_RTN(clientid);
+	STRING_PTR_SANITY_CHECK_RTN(username);
+	STRING_PTR_SANITY_CHECK_RTN(passwd);
+
+	int ret = at_mqtt_connect(clientid, username, passwd);
+
+	if (ret < 0) {
+		Log_e("fail to connect mqtt server: (%s: %s: %s)!!!", clientid, username, passwd);
+	} else {
+		Log_d("connected mqtt server: (%s: %s: %s)!!!", clientid, username, passwd);
+	}
+
+	return ret;
+}
+
+int mqtt_publish(const char *topic, const void *buff, uint16_t length)
+{
+	STRING_PTR_SANITY_CHECK_RTN(topic);
+	POINTER_SANITY_CHECK(buff, QCLOUD_ERR_INVAL);
+	NUMBERIC_SANITY_CHECK(length, QCLOUD_ERR_INVAL);
+
+	int ret = at_mqtt_publish(topic, buff, length);
+
+	if (ret < 0) {
+		Log_e("fail to publish topic: (%s: %s)!!!", topic, buff);
+	} else {
+		Log_d("published topic success!!!");
+	}
+
+	return ret;
+}
+
+int mqtt_disconnect(void)
+{
+	int ret = at_mqtt_disconnect();
+
+	if (ret < 0) {
+		Log_e("fail disconnect mqtt server!!!");
+	} else {
+		Log_d("disconnected mqtt server!!!");
+	}
+
+	return ret;
+}
 
 #endif

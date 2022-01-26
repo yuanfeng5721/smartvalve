@@ -33,6 +33,8 @@ static sensors_sample_t ADCSample[SAMPLE_ADC_CHANNEL] = {
 	{"moto_temp",    ADC_CHANNEL_11, 0.0, 0.0},
 	{"sys_temp",     0xFFFFFFFF,     0.0, 0.0}
 };
+
+float sensor_data[SAMPLE_ADC_CHANNEL] = {0};
 //static char *SampleChName[SAMPLEADC_CHANNEL] = {"moto_battery","angle","front_stress","rear_stress","sys_battery","sys_temp","moto_temp"};
 static linear_equs_t f_press_param;
 static linear_equs_t b_press_param;
@@ -264,6 +266,7 @@ sensors_sample_t* Sensors_Sample_Data(void)
 					ADCSample[ch].voltage = vcc;
 				}
 				sensor_convert(ch, ADCSample[ch].voltage);
+				sensor_data[ch] = ADCSample[ch].value;
 				osDelay(10);
 				LOGI("Read Voltage:vcc[%s] = %0.2fv , value = %.2f\r\n",ADCSample[ch].name, ADCSample[ch].voltage, ADCSample[ch].value);
 			}

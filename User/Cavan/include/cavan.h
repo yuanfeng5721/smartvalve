@@ -10,7 +10,7 @@
 #define CONFIG_MQTTS	1
 
 #if CONFIG_MQTTS
-#define MQTT_HOST		"studio-mqtts.heclouds.com"
+#define MQTT_HOST		"mqttstls.heclouds.com"
 #define MQTT_PORT		8883
 #else
 #define MQTT_HOST		"studio-mqtt.heclouds.com"

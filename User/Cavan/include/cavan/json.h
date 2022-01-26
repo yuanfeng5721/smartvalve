@@ -35,6 +35,7 @@ static inline void cavan_json_array_end(cavan_json_t *json)
 
 static inline void cavan_json_init(cavan_json_t *json)
 {
+	memset(json->buff,0,sizeof(json->buff));
 	json->length = 0;
 }
 

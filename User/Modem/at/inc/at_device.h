@@ -57,6 +57,8 @@ int modem_init(void);
 int modem_deinit(void);
 int at_device_get_info(ue_info *pInfo);
 int modem_ntp(time_t *t);
+extern int at_device_get_rssi(void);
+char *at_device_get_imei(void);
 
 /*socket api*/
 size_t  socket_read(int fd, unsigned char *data, size_t datalen, uint32_t timeout_ms);
@@ -65,6 +67,10 @@ int socket_disconnect(int fd);
 int socket_connect(const sockaddr_t *addr);
 int socket_parse_domain(const char *domain, sockaddr_t *addr);
 
+/*mqtt api*/
+int mqtt_connect(const char *clientid, const char *username, const char *passwd);
+int mqtt_publish(const char *topic, const void *buff, uint16_t length);
+int mqtt_disconnect(void);
 
 #ifdef __cplusplus
 }
