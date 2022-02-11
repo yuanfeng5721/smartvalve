@@ -12,8 +12,10 @@
 #include "adc.h"
 #include "sensors.h"
 #include "board.h"
+#include "device_nv.h"
 #include "log.h"
 #include "cmsis_os.h"
+#include "math.h"
 
 #define VDDA_APPLI        ((uint32_t) 3300)    /* Value of analog voltage supply Vdda (unit: mV) */
 #define RANGE_12BITS      ((uint32_t) 4095)    /* Max digital value with a full range of 12 bits */
@@ -163,20 +165,20 @@ static float calc_press_frome_voltage(float voltage, linear_equs_t param)
 	return press;
 }
 
-static uint8_t press_init(void)
+static void press_init(void)
 {
 	uint16_t f_press_max = 0, f_press_min = 0, b_press_max = 0, b_press_min = 0;
 
-//	f_press_max = get_nv_int(NV_F_PRESS_MAX);
-//	f_press_min = get_nv_int(NV_F_PRESS_MIN);
-//	b_press_max = get_nv_int(NV_B_PRESS_MAX);
-//	b_press_min = get_nv_int(NV_B_PRESS_MIN);
+	f_press_max = nvitem_get_int(NV_F_PRESS_MAX);
+	f_press_min = nvitem_get_int(NV_F_PRESS_MIN);
+	b_press_max = nvitem_get_int(NV_B_PRESS_MAX);
+	b_press_min = nvitem_get_int(NV_B_PRESS_MIN);
 
 	calc_press_sensor_slope(f_press_max,f_press_min,&f_press_param);
 	calc_press_sensor_slope(b_press_max,b_press_min,&b_press_param);
 }
 
-static float *sensor_convert(sample_channel_e ch, float voltage)
+static float sensor_convert(sample_channel_e ch, float voltage)
 {
 	switch(ch)
 	{
@@ -223,13 +225,14 @@ static float *sensor_convert(sample_channel_e ch, float voltage)
 		default:
 		break;
 	}
+	return ADCSample[ch].value;
 }
 
 sensors_sample_t* Sensors_Sample_Data(void)
 {
 	uint16_t data[AVERAGE_MAX_NUM][SAMPLE_ADC_CHANNEL-1] = {0};
 	uint32_t i = 0, ch = 0;
-	volatile uint32_t value=0,tmp = 0;
+	volatile uint32_t value=0;
 	float vcc = 0;
 
 	if(!adcDmaCompleteBinarySemHandle)
@@ -276,7 +279,7 @@ sensors_sample_t* Sensors_Sample_Data(void)
 		}
 		//sensor_power(0);
 	}
-	return &ADCSample;
+	return ADCSample;
 }
 
 void MX_ADC_ConvCpltCallback(void)
@@ -298,4 +301,9 @@ void Sensors_Power(bool onoff)
 {
 	sensors_power(onoff);
 	//osDelay(1000);
+}
+
+void Sensors_param_init(void)
+{
+	press_init();
 }

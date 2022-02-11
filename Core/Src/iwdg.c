@@ -21,7 +21,7 @@
 #include "iwdg.h"
 
 /* USER CODE BEGIN 0 */
-
+#define LSI_CLK_FREQ    32000
 /* USER CODE END 0 */
 
 IWDG_HandleTypeDef hiwdg;
@@ -38,8 +38,8 @@ void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_64;
-  hiwdg.Init.Reload = 4095;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
+  hiwdg.Init.Reload = (FEED_DOG_INTERVAL+4)*LSI_CLK_FREQ/256;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
     Error_Handler();

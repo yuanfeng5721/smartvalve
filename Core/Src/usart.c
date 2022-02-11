@@ -235,15 +235,17 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* UART5 interrupt Init */
-    HAL_NVIC_SetPriority(UART5_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(UART5_IRQn);
+//    HAL_NVIC_SetPriority(UART5_IRQn, 5, 0);
+//    HAL_NVIC_EnableIRQ(UART5_IRQn);
   /* USER CODE BEGIN UART5_MspInit 1 */
     /* Enable the UART Parity Error Interrupt */
-	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_PE);
+//	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_PE);
 	/* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-	//__HAL_UART_ENABLE_IT(uartHandle, UART_IT_ERR);
+//	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_ERR);
 	/* Enable the UART Data Register not empty Interrupt */
-	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_RXNE);
+//	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_RXNE);
+//
+//	__HAL_UART_ENABLE_IT(uartHandle, UART_IT_IDLE);
   /* USER CODE END UART5_MspInit 1 */
   }
   else if(uartHandle->Instance==USART1)

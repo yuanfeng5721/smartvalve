@@ -725,6 +725,21 @@ bool cavan_wait_conn_complete(u32 timeout)
 	return true;
 }
 
+bool cavan_wait_disconn_complete(u32 timeout)
+{
+	if (at_waitFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG, timeout)) {
+		if (at_waitFlag(MQTT_FAIL_FLAG, 100)) {
+			Log_e("disconnect fail!!!");
+			return false;
+		}
+	} else {
+		Log_e("disconnect timeout!!!");
+		return false;
+	}
+
+	return true;
+}
+
 bool cavan_wait_send_complete(u32 timeout)
 {
 	bool success = at_waitFlag(NET_INPUT_FLAG, timeout);
@@ -1629,7 +1644,7 @@ static int ml302_mqtt_disconnect(void)
 	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
 	at_exec_cmd(resp, "AT+MMQTTDISCON=%d", MQTT_CONN);
 
-	if(cavan_wait_conn_complete(500)) {
+	if(cavan_wait_disconn_complete(2000)) {
 		ret = QCLOUD_RET_SUCCESS;
 	} else {
 		ret = QCLOUD_ERR_MQTT_DISCONN_FAIL;

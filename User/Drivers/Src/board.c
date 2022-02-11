@@ -79,3 +79,8 @@ void Delay_S(uint16_t s)
 {
 	HAL_Delay(s*1000);
 }
+
+void System_Reset(void)
+{
+	NVIC_SystemReset();
+}

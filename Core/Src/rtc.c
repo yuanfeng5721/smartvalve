@@ -144,6 +144,7 @@ void MX_RTC_Set_Time(time_t time)
 	sTime.Minutes = ts->tm_min;
 	sTime.Seconds = ts->tm_sec;
 	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	sTime.DayLightSaving=RTC_DAYLIGHTSAVING_NONE;
 
 	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
 	{

@@ -4,7 +4,7 @@
  *  Created on: 2022年1月24日
  *      Author: boboowang
  */
-
+#define LOG_TAG "EVNET"
 #include "log.h"
 #include <stdint.h>
 #include <stdbool.h>

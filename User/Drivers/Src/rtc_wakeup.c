@@ -100,7 +100,7 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s)
 		gt = localtime(&t1);
 		strftime(buf, 20, "%Y-%m-%d %H:%M:%S", gt);
 		LOGD("next wakeup time: %s!!!!\r\n",buf);
-		sleeptime = interval_s+2;
+		sleeptime = interval_s;
 	}
 	else
 	{
@@ -115,31 +115,53 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s)
 		strftime(buf, 20, "%Y-%m-%d %H:%M:%S", gt);
 		LOGD("next wakeup time: %s!!!!\r\n",buf);
 		t1=time(NULL);
-		sleeptime = t2-t1+2;
+		sleeptime = t2-t1;
 	}
 	LOGD("sleep time: time=%ds\r\n",sleeptime);
 
 	return sleeptime;
 }
 
-time_t SleepAndWakeUp(uint32_t interval_s)
+void SuspendTick(void)
 {
-	uint32_t sleeptime;
-	time_t next_time;
-	sleeptime = calc_wakeup_time(&next_time, interval_s);
-	MX_RTC_Wakeup_Start(sleeptime);
-	LOGD("into sleep!!!!!!\r\n");
+  /* Disable SysTick Interrupt */
+  CLEAR_BIT(SysTick->CTRL,SysTick_CTRL_TICKINT_Msk);
+}
+
+void ResumeTick(void)
+{
+  /* Enable SysTick Interrupt */
+  SET_BIT(SysTick->CTRL,SysTick_CTRL_TICKINT_Msk);
+}
+
+void enter_stop_mode(void)
+{
 	SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
 	SysTick->CTRL  = 0;
-	//HAL_SuspendTick();
+	//SuspendTick();
 	//SystemPower_Config();
 	HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
 	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
 				   SysTick_CTRL_TICKINT_Msk   |
 				   SysTick_CTRL_ENABLE_Msk;
-	//HAL_ResumeTick();
+	//ResumeTick();
 	//System_Reinit();
+}
+time_t SleepAndWakeUp(uint32_t interval_s)
+{
+	uint16_t feeddog_count = 0;
+	uint32_t remain_sleep_time = 0;
+	uint32_t sleeptime;
+	time_t next_time;
+	sleeptime = calc_wakeup_time(&next_time, interval_s);
+	LOGD("into sleep!!!!!!\r\n");
+
+//	feeddog_count = sleeptime/FEED_DOG_INTERVAL;
+//	remain_sleep_time = sleeptime%FEED_DOG_INTERVAL;
+
+	MX_RTC_Wakeup_Start(sleeptime);
+	enter_stop_mode();
 	SystemClock_Config();
 	MX_RTC_Wakeup_Stop();
 	LOGD("wakeup!!!!!!\r\n");

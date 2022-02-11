@@ -18,4 +18,5 @@ void sensors_power(bool onoff);
  *****************************************************/
 void Delay_MS(uint16_t ms);
 void Delay_S(uint16_t s);
+void System_Reset(void);
 #endif

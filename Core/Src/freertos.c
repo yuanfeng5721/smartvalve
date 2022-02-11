@@ -36,6 +36,7 @@
 #include "sensors_task.h"
 #include "device_nv.h"
 #include "rtc_wakeup.h"
+#include "shell.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -227,17 +228,18 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 512);
-  modemTaskHandle = osThreadCreate(osThread(modemTask), NULL);
+//  osThreadDef(modemTask, StartModemTask, osPriorityNormal, 0, 512);
+//  modemTaskHandle = osThreadCreate(osThread(modemTask), NULL);
 
-  osThreadDef(bleTask, StartBleTask, osPriorityNormal, 0, 256);
-  bleTaskHandle = osThreadCreate(osThread(bleTask), NULL);
-
-  osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
-  rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
+//  osThreadDef(bleTask, StartBleTask, osPriorityNormal, 0, 256);
+//  bleTaskHandle = osThreadCreate(osThread(bleTask), NULL);
+//
+//  osThreadDef(rs485Task, StartRs485Task, osPriorityNormal, 0, 256);
+//  rs485TaskHandle = osThreadCreate(osThread(rs485Task), NULL);
 
   globle_event_init();
 
+  ShellTaskInit();
   SensorsTaskInit();
   DataProcessTaskInit();
   /* USER CODE END RTOS_THREADS */
@@ -259,7 +261,7 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
 	//check system task, if idle into sleep
-	osDelay(100);
+	osDelay(5000);
 	HAL_IWDG_Refresh(&hiwdg);
   }
   /* USER CODE END StartDefaultTask */

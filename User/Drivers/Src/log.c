@@ -25,10 +25,15 @@
 #include <stdint.h>
 
 uint8_t g_current_dbg_level = LOG_INFO;
-
+UART_HandleTypeDef *g_debug_uart = &huart5;
 void log_init(void)
 {
 	MX_UART5_Init();
+}
+
+void log_set_uart(UART_HandleTypeDef *huart)
+{
+	g_debug_uart = huart;
 }
 
 #ifdef __GNUC__
@@ -39,6 +44,6 @@ void log_init(void)
 
 PUTCHAR_PROTOTYPE
 {
-	HAL_UART_Transmit(&huart5, (uint8_t*)&ch,1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(g_debug_uart, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
     return ch;
 }

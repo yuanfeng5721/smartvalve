@@ -7,6 +7,7 @@
 #define LOG_TAG "DATA_PROC"
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 #include "log.h"
 #include "cmsis_os.h"
 #include "iot_msg.h"
@@ -100,6 +101,41 @@ cavan_json_t *make_report_json(void)
 	return json;
 }
 
+int32_t calc_q(float p_b, float p_f, float angle)
+{
+	#define P   1  //水的密度
+	//#define F   1
+	int32_t dp = (p_f-p_b);
+	uint32_t Q=0;
+	uint8_t pos = 0;
+	uint32_t F = 1000;//1000为单位
+	uint32_t z = 0;
+	uint8_t degree = 0;
+
+	degree = ((angle/1.8)*10+5)/10;
+
+	if(degree == 0)
+	{
+		Q = 0;
+		LOGI("calc q: Q = %d,degree = %d \r\n", Q, degree);
+	}
+	else
+	{
+		pos = (degree>1)?(degree/2 - 1):0;
+		z = zeta_value[pos];
+		F = nvitem_get_int(NV_F);
+
+		Q = F*sqrt(2*dp/P)/sqrt(z);
+		LOGI("degree = %d, pos = %d\r\n", degree, pos);
+		LOGI("sqrt(2*dp/P) = %f\r\n",sqrt(2*dp/P));
+		LOGI("sqrt(zeta_value[pos] = %f\r\n",sqrt(z));
+
+		LOGI("calc q: pf=%d, pb=%d, degree=%d, zeta=%d, Q=%d\r\n", p_f, p_b, degree, z, Q);
+	}
+
+	return Q;
+}
+
 void sensor_data_clear(uint8_t item)
 {
 	for(int i=0; i<DP_MAX_NUMBER; i++) {
@@ -115,7 +151,14 @@ void record_sensor_data(time_t t)
 {
 	extern float sensor_data[SAMPLE_ADC_CHANNEL];
 	uint8_t i = 0;
+	float Q = 0, p_b = 0, p_f = 0, angle = 0;
 	time_t time = LOCALTIME_TO_UNIXTIME(t, 8);
+
+	angle = sensor_data[1];
+	p_b = sensor_data[2];
+	p_f = sensor_data[3];
+
+	Q = calc_q(p_b, p_f, angle);
 
 	sensor_data_clear(0);
 	for(i=0; i<SAMPLE_ADC_CHANNEL-1; i++)
@@ -127,6 +170,15 @@ void record_sensor_data(time_t t)
 	dp_data[i].dt[0].v = at_device_get_rssi();
 	dp_data[i].dt[0].t = time;
 	dp_data[i].dt[0].isOk = true;
+	i++;
+	dp_data[i].dt[0].v = Q;
+	dp_data[i].dt[0].t = time;
+	dp_data[i].dt[0].isOk = true;
+}
+
+int valve_control(void)
+{
+
 }
 
 void run_process(void)
@@ -153,48 +205,68 @@ void run_process(void)
 void DataProcessTask(void const * argument)
 {
 	//osMsgStatus status;
+	BootMode bootmode;
 	time_t next_time;
 	io_msg_t p_msg =
 	{
-	.type = IO_MSG_TYPE_READ_SENSOR,
-	.subtype = 0x1234,
-	.u.buf = "567890",
+		.type = IO_MSG_TYPE_READ_SENSOR,
+		.subtype = 0x1234,
+		.u.buf = "567890",
 	};
 
 	// init nvitem
 	init_nvitems();
 
-	//first init modem, sync time
-	if(!modem_init())
-	{
-	  //sync net time
-	  modem_ntp(NULL);
-	}
+	// init sensors param
+	Sensors_param_init();
 
-	//close modem
-	modem_deinit();
-//	  set_local_time(make_data_time(22, 1, 24, 15, 20, 0, 0));
-//	  osDelay(S_TO_TICKS(5));
-	make_report_json();
-	while (1) {
-		next_time = SleepAndWakeUp(MIN_TO_SECONDS(10));
+	// check boot mode
+	bootmode = device_get_bootmode();
+	LOGI("--- device boot mode = %d ---\r\n", bootmode);
+	if(bootmode == CONFIG_MODE) {
+		LOGI("--- device into configure mode ---\r\n");
+		while(1)
+		{
+			osDelay(2000);
+		}
+	} else if (bootmode == NO_ACTIVITE_MODE) {
+		LOGI("--- device into low power mode ---\r\n");
+		osDelay(20000);
+		enter_stop_mode();
+	} else {
+		LOGI("--- device into normal mode ---\r\n");
+		//first init modem, sync time
+		if(!modem_init())
+		{
+		  //sync net time
+		  modem_ntp(NULL);
+		}
 
-		//send sensor sample message
-		os_msg_send(sensorsQueueHandle, &p_msg, 0);
-		//wait sample task complete
-		if(os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60)) != IO_EVT_TYPE_SENSORS_COMPLETE)
-		{
-			LOGE("some task exec error\r\n");
+		//close modem
+		modem_deinit();
+
+		while (1) {
+			next_time = SleepAndWakeUp(MIN_TO_SECONDS(5));
+
+			//send sensor sample message
+			os_msg_send(sensorsQueueHandle, &p_msg, 0);
+			//wait sample task complete
+			if(os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60)) != IO_EVT_TYPE_SENSORS_COMPLETE)
+			{
+				LOGE("some task exec error\r\n");
+			}
+			else
+			{
+				//record sensor data
+				record_sensor_data(next_time);
+				//valve control
+				valve_control();
+				//wait send task complete
+				LOGI("sensor sample ok, next task run\r\n");
+				run_process();
+			}
+			osDelay(100);
 		}
-		else
-		{
-			//record sensor data
-			record_sensor_data(next_time);
-			//wait send task complete
-			LOGI("sensor sample ok, next task run\r\n");
-			run_process();
-		}
-		osDelay(100);
 	}
 }
 

@@ -45,3 +45,6 @@ size_t string_to_array(uint32_t *value, char *str, size_t value_len)
 	}
 	return i;
 }
+
+
+/***********************************************************************/
