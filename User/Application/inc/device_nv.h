@@ -8,15 +8,18 @@
 #ifndef APPLICATION_INC_DEVICE_NV_H_
 #define APPLICATION_INC_DEVICE_NV_H_
 
+#include "nvitem.h"
+
 #define DEFAULT_NV_ITEMS  DEFAULT_NV_ITEM_NUM   //22 items
 
 //#define NV_FLAG "nv_flag"
 #define NV_VERSION "nv_version"
 #define UPDATE_FREQ   "update_freq"
+#define SAMPLE_FREQ   "sample_freq"
 #define NV_IMEI      		"imei"
-#define NV_PRODUCT_ID    "product_id"
-#define NV_DEVICE_ID     "device_id"
-#define NV_AUTH_INFO			"auth_info"
+#define NV_CLIENT_ID    "clientid"
+#define NV_USERNAME     "username"
+#define NV_PASSWORD		"passwd"
 #define BOOT_MODE			"boot_mode"
 #define BOOT_COUNT    "boot_count"
 #define WAKEUP_COUNT  "wakeup_count"
@@ -46,6 +49,14 @@
 #define HW_VERSION "V1.0"
 
 
+//boot mode
+typedef enum{
+	CONFIG_MODE = 0,
+	NO_ACTIVITE_MODE = 1,
+	NORMAL_MODE = 2,
+	MAX_MODE = 3,
+}BootMode;
+
 /*********************************************************************
  *
  *********************************************************************/
@@ -59,11 +70,26 @@
 #define ZETA_NUM        50
 
 #define ANGLE_DEFAULT_KEY "ANGLE_DEFAULT"
-#define ANGLE_DEFAULT_NUM 72
+#define ANGLE_DEFAULT_NUM 288
+
+
+/***********************************************************************
+ * 						extern variable
+ ***********************************************************************/
+extern uint32_t press_back_default_value[PB_DEFAULT_NUM];
+extern uint32_t q_default_value[Q_DEFAULT_NUM];
+extern uint32_t zeta_value[ZETA_NUM];
+extern uint32_t angle_default_value[ANGLE_DEFAULT_NUM];
 /***********************************************************************
  * 						function define
  ***********************************************************************/
 void print_software_version(void);
 int init_nvitems(void);
 
+uint32_t get_F(void);
+void set_F(uint32_t value);
+bool get_warring_flag(void);
+void set_warring_flag(bool flag);
+BootMode device_get_bootmode(void);
+void device_set_bootmode(BootMode mode);
 #endif /* APPLICATION_INC_DEVICE_NV_H_ */

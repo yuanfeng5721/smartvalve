@@ -57,7 +57,7 @@ typedef struct _nvitem{
 
 #ifdef NV_USE_EASYFLASH
 //#define DEFAULT_NV_ITEM_NUM EF_DEFAULT_ENV_ITEM
-#define DEFAULT_NV_ITEM_NUM 20
+#define DEFAULT_NV_ITEM_NUM 22
 #define MAKE_NV_ITEM_STR(key,value)  {NV_VALUE_STRING, key, .body.str=value, strlen(value)}
 #define MAKE_NV_ITEM_INT(key,value) {NV_VALUE_INT, key, .body.data=value, 0}
 #define MAKE_NV_ITEM_ARRAY(key,value,size) {NV_VALUE_ARRAY, key, .body.array=value, size}

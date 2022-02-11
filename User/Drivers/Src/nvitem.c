@@ -73,7 +73,9 @@ size_t nvitem_get_array(const char *key, uint32_t *value, uint32_t value_len)
 
 	p = ef_get_env(key);
 	if(p) {
-		return string_to_array(value, p, value_len);
+		memset(env_buf, 0, sizeof(env_buf));
+		memcpy(env_buf, p, strlen(p));
+		return string_to_array(value, env_buf, value_len);
 	} else {
 		return 0;
 	}
@@ -149,8 +151,9 @@ NvErrCode nvitem_set_array_raw(const char *key, const uint32_t *value, uint32_t 
 	memset(env_buf, 0, sizeof(env_buf));
 	str_len = array_to_string(env_buf, value, value_len);
 
-	if(str_len)
+	if(str_len){
 		return ef_set_env(key,env_buf);
+	}
 	return NV_WRITE_ERR;
 
 #else
@@ -169,8 +172,9 @@ NvErrCode nvitem_set_array(const char *key, const uint32_t *value, uint32_t valu
 	memset(env_buf, 0, sizeof(env_buf));
 	str_len = array_to_string(env_buf, value, value_len);
 
-	if(str_len)
+	if(str_len){
 		return ef_set_and_save_env(key,env_buf);
+	}
 	return NV_WRITE_ERR;
 
 #else
@@ -191,8 +195,9 @@ NvErrCode nvitem_set_int_raw(const char *key, uint32_t value)
 	//p = utoa(value, env_buf, 10);
 	str_len = sprintf(env_buf, "%d", value);
 
-	if(str_len)
+	if(str_len){
 		return ef_set_env(key,env_buf);
+	}
 
 	return NV_WRITE_ERR;
 #else
@@ -213,9 +218,9 @@ NvErrCode nvitem_set_int(const char *key, uint32_t value)
 	memset(env_buf, 0, sizeof(env_buf));
 	//p = utoa(value, env_buf, 10);
 	str_len = sprintf(env_buf, "%d", value);
-
-	if(str_len)
+	if(str_len){
 		return ef_set_and_save_env(key,env_buf);
+	}
 	return NV_WRITE_ERR;
 #else
 	if(kv_item_set(key, (void *)&value, sizeof(value)))

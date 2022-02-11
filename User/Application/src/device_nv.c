@@ -13,46 +13,47 @@
 #include "utils.h"
 #include "log.h"
 
-const uint32_t press_back_default_value[PB_DEFAULT_NUM]=
+uint32_t press_back_default_value[PB_DEFAULT_NUM]=
 	{100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,200,\
 	 200,200,200,200,200,200,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,\
 	 100,100,100,100,100,100,100,100,100,200,200,200,200,200,200,200,200,200,200,100,100,100,\
 	 100,100,100,100,100,100};
 
-const uint32_t q_default_value[Q_DEFAULT_NUM]=
+uint32_t q_default_value[Q_DEFAULT_NUM]=
 	{50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,100,100,100,100,100,200,200,200,200, \
 	 200,200,350,350,350,200,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100, \
 	 100,100,100,100,100,100,100,100,100,200,200,200,200,200,200,200,200,200,200,100,100,50 , \
 	 50 ,50 ,50 ,50 ,50 ,50};
 
-const uint32_t zeta_value[ZETA_NUM]=
+uint32_t zeta_value[ZETA_NUM]=
 	{750000,600000,480000,380000,320000,260000,210000,170000,125000,80000,60000,43000,30000,\
 	 24500,20000,14800,10600,7000,6300,5844,4900,4110,3650,3170,2588,2180,1790,1540,1380,1250,\
      1105,950,810,730,661,590,521,464,415,375,341,312,280,262,247,235,224,214,206,200};
 
-const uint32_t angle_default_value[ANGLE_DEFAULT_NUM] =
+uint32_t angle_default_value[ANGLE_DEFAULT_NUM] =
 	{0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,20,20,20,20,20,20,20,20,20,20,20,20,20,20, \
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20, \
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,0};
 
-const static uint32_t  NVVERSION	= 3;  //default nv version, if need update default nv, please  NV_VERSION + 1
-const static uint8_t  update_freq = 20;
-const static uint32_t wakeup_count = 0;
-const static uint8_t  F_value = 1;
-const static uint8_t  warring_flag = false;
-const static uint8_t  pre_set_angle = 0;
-const static uint16_t f_press_max = 100;
-const static uint16_t f_press_min = 0;
-const static uint16_t b_press_max = 100;
-const static uint16_t b_press_min = 0;
-const static uint8_t  encoder_count = 100;
-const static uint16_t moto_timer_count = 382;
+const static uint32_t  NVVERSION	= 5;  //default nv version, if need update default nv, please  NV_VERSION + 1
+//const static uint8_t  update_freq = 20;
+//const static uint32_t wakeup_count = 0;
+//const static uint8_t  F_value = 1;
+//const static uint8_t  warring_flag = false;
+//const static uint8_t  pre_set_angle = 0;
+//const static uint16_t f_press_max = 100;
+//const static uint16_t f_press_min = 0;
+//const static uint16_t b_press_max = 100;
+//const static uint16_t b_press_min = 0;
+//const static uint8_t  encoder_count = 100;
+//const static uint16_t moto_timer_count = 382;
+static BootMode boot_mode = CONFIG_MODE;
 
 const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 		MAKE_NV_ITEM_STR(NV_IMEI,				"865233030271820"),
-		MAKE_NV_ITEM_STR(NV_PRODUCT_ID,			"199761"),
-		MAKE_NV_ITEM_STR(NV_DEVICE_ID,			"520256916"),
-		MAKE_NV_ITEM_STR(NV_AUTH_INFO,			"865233030271820"),
+		MAKE_NV_ITEM_STR(NV_CLIENT_ID,			"TEST001"),
+		MAKE_NV_ITEM_STR(NV_USERNAME,			"448403"),
+		MAKE_NV_ITEM_STR(NV_PASSWORD,			"WIZpdLCOQv1cWYCbrKmwYzM5XeJ6ewZ9Ly0M7lrQLgs="),
 #if 0
 		MAKE_NV_ITEM_STR(BOOT_MODE,	    "0"),
 		MAKE_NV_ITEM_STR(BOOT_COUNT,		"0"),
@@ -86,7 +87,9 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 		MAKE_NV_ITEM_INT(NV_MOTO_TIMER_COUNT, 	&moto_timer_count, sizeof(moto_timer_count)),
 #else
 		MAKE_NV_ITEM_INT(NV_VERSION,			NVVERSION),
+		MAKE_NV_ITEM_INT(BOOT_MODE,	    		0),
 		MAKE_NV_ITEM_INT(UPDATE_FREQ,			20),
+		MAKE_NV_ITEM_INT(SAMPLE_FREQ,			20),
 		MAKE_NV_ITEM_INT(WAKEUP_COUNT,			0),
 		MAKE_NV_ITEM_INT(NV_F,					1),
 		MAKE_NV_ITEM_INT(NV_WARRING_FLAG,		0),
@@ -127,8 +130,8 @@ int init_nvitems(void)
 	uint8_t nv_ver = 0;
 	uint32_t value[80] = {0};
 #if 0
-	//ef_erase_all();
-	flash_test();
+	ef_erase_all();
+	//flash_test();
 #else
 	nvitem_init(NVVERSION);
 
@@ -136,23 +139,22 @@ int init_nvitems(void)
 	LOGD("old nv version %d , new nv version %d \r\n", nv_ver, NVVERSION);
 	if(nv_ver < NVVERSION) {
 		nvitem_set_default();
-		nvitem_print();
+		//nvitem_print();
 	}
 #if 1
-	//print string env
-	for(i=0; i<4; i++){
-		char *str = nvitem_get_string(default_env_set[i].key);
-		LOGD("%s: %s\r\n", default_env_set[i].key, (str==NULL)?"":str);
-	}
-	//print int env
-	for(i=4; i<16; i++) {
-		uint32_t data = nvitem_get_int(default_env_set[i].key);
-		LOGD("%s: %d\r\n", default_env_set[i].key, data);
-	}
-	//print array env
-	for(i=16; i<20; i++) {
-		len = nvitem_get_array(default_env_set[i].key, value, 512);
-		print_array_nv(default_env_set[i].key, value, len);
+	for(i=0; i<DEFAULT_NV_ITEMS; i++)
+	{
+		if(default_env_set[i].type == NV_VALUE_STRING) { //print string env
+			char *str = nvitem_get_string(default_env_set[i].key);
+			LOGD("%s: %s\r\n", default_env_set[i].key, (str==NULL)?"":str);
+		} else if(default_env_set[i].type == NV_VALUE_INT) { //print int env
+			uint32_t data = nvitem_get_int(default_env_set[i].key);
+			LOGD("%s: %d\r\n", default_env_set[i].key, data);
+		} else if(default_env_set[i].type == NV_VALUE_ARRAY) { //print array env
+			len = nvitem_get_array(default_env_set[i].key, default_env_set[i].body.array, default_env_set[i].size);
+			print_array_nv(default_env_set[i].key, default_env_set[i].body.array, len);
+		}
+
 	}
 #else
 	nvitem_print();
@@ -160,10 +162,43 @@ int init_nvitems(void)
 #endif
 }
 
-void test_nv_def(void)
+uint32_t get_F(void)
 {
-#define STR1(R) #R
-#define STR2(R) STR1(R)
-	int i = 0;
-	LOGD("----:%s \r\n", STR2(i));
+	uint32_t value = 0;
+
+	value = nvitem_get_int(NV_F);
+
+	return value;
+}
+
+void set_F(uint32_t value)
+{
+	nvitem_set_int(NV_F, value);
+}
+
+bool get_warring_flag(void)
+{
+	if(nvitem_get_int(NV_WARRING_FLAG))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void set_warring_flag(bool flag)
+{
+	nvitem_set_int(NV_WARRING_FLAG, flag);
+}
+
+BootMode device_get_bootmode(void)
+{
+	nvitem_get_int(BOOT_MODE);
+}
+
+void device_set_bootmode(BootMode mode)
+{
+	nvitem_set_int(BOOT_MODE, mode);
 }
