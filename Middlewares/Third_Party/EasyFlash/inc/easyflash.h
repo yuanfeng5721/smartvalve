@@ -33,7 +33,7 @@
 #include <ef_cfg.h>
 #include <stdint.h>
 #include <stddef.h>
-//#include <stdbool.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,18 +66,29 @@ if (!(EXPR))                                                                  \
     EF_DEBUG("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);         \
     while (1);                                                                \
 }
-/* EasyFlash software version number */
-#define EF_SW_VERSION                "3.0.0"
 
-typedef struct _ef_env{
+/**
+ * ENV version number defined by user.
+ * Please change it when your firmware add a new ENV to default_env_set.
+ */
+#ifndef EF_ENV_VER_NUM
+#define EF_ENV_VER_NUM                 0
+#endif
+
+/* EasyFlash software version number */
+#define EF_SW_VERSION                  "3.3.0"
+#define EF_SW_VERSION_NUM              0x30300
+
+typedef struct _ef_env {
     char *key;
     char *value;
-}ef_env, *ef_env_t;
+} ef_env, *ef_env_t;
 
 /* EasyFlash error code */
 typedef enum {
     EF_NO_ERR,
     EF_ERASE_ERR,
+    EF_READ_ERR,
     EF_WRITE_ERR,
     EF_ENV_NAME_ERR,
     EF_ENV_NAME_EXIST,
@@ -101,21 +112,28 @@ EfErrCode ef_load_env(void);
 void ef_print_env(void);
 char *ef_get_env(const char *key);
 EfErrCode ef_set_env(const char *key, const char *value);
+EfErrCode ef_del_env(const char *key);
 EfErrCode ef_save_env(void);
 EfErrCode ef_env_set_default(void);
 size_t ef_get_env_write_bytes(void);
 EfErrCode ef_set_and_save_env(const char *key, const char *value);
+EfErrCode ef_del_and_save_env(const char *key);
 #endif
 
 #ifdef EF_USING_IAP
 /* ef_iap.c */
 EfErrCode ef_erase_bak_app(size_t app_size);
 EfErrCode ef_erase_user_app(uint32_t user_app_addr, size_t user_app_size);
+EfErrCode ef_erase_spec_user_app(uint32_t user_app_addr, size_t app_size,
+                                 EfErrCode (*app_erase)(uint32_t addr, size_t size));
 EfErrCode ef_erase_bl(uint32_t bl_addr, size_t bl_size);
 EfErrCode ef_write_data_to_bak(uint8_t *data, size_t size, size_t *cur_size,
-        size_t total_size);
+                               size_t total_size);
 EfErrCode ef_copy_app_from_bak(uint32_t user_app_addr, size_t app_size);
+EfErrCode ef_copy_spec_app_from_bak(uint32_t user_app_addr, size_t app_size,
+                                    EfErrCode (*app_write)(uint32_t addr, const uint32_t *buf, size_t size));
 EfErrCode ef_copy_bl_from_bak(uint32_t bl_addr, size_t bl_size);
+uint32_t ef_get_bak_app_start_addr(void);
 #endif
 
 #ifdef EF_USING_LOG

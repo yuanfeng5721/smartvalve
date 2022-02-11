@@ -35,8 +35,8 @@
 #include "cmsis_os.h"
 
 /* default environment variables set for user */
-static const ef_env default_env_set[EF_DEFAULT_ENV_ITEM] = {
-		{"EF_VERSION", "v1.0.0", strlen("v1.0.0")},
+static const ef_env default_env_set[] = {
+	{"easyflah_version",EF_SW_VERSION}
 };
 //extern const ef_env default_env_set[EF_DEFAULT_ENV_ITEM];
 static char log_buf[80];
@@ -78,14 +78,25 @@ EfErrCode ef_port_init(ef_env const **default_env, size_t *default_env_size) {
  */
 EfErrCode ef_port_read(uint32_t addr, uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
-    uint8_t *buf_8 = (uint8_t *)buf;
+#if(EF_ERASE_MIN_SIZE == 4)
+    uint32_t *buf_32 = (uint32_t *)buf;
     size_t i;
 	
-	//EF_ASSERT(addr % 4 == 0);
+	EF_ASSERT(addr % 4 == 0);
     /* You can add your code under here. */
-    for (i = 0; i < size; i++, addr ++, buf_8++) {
+    for (i = 0; i < size; i+=4, addr+=4, buf_32++) {
+		*buf_32 = *(uint32_t *) addr;
+	}
+#else
+    uint8_t *buf_8 = (uint8_t *)buf;
+	size_t i;
+
+	//EF_ASSERT(addr % 4 == 0);
+	/* You can add your code under here. */
+	for (i = 0; i < size; i++, addr++, buf_8++) {
 		*buf_8 = *(uint8_t *) addr;
 	}
+#endif
     return result;
 }
 
@@ -106,6 +117,7 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 	FLASH_EraseInitTypeDef EraseInitStruct;
 	uint32_t PAGEError = 0;
 	uint8_t retry = 0;
+#if (EF_ERASE_MIN_SIZE == 4)
     /* make sure the start address is a multiple of EF_ERASE_MIN_SIZE */
     EF_ASSERT(addr % EF_ERASE_MIN_SIZE == 0);
 
@@ -114,12 +126,10 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 
 	if(size%EF_ERASE_MIN_SIZE != 0)
 		erase_count++;
-#ifdef USE_EEPROM
 	HAL_FLASHEx_DATAEEPROM_Unlock();
-#if 1
-	for (i = 0; i < erase_count*EF_ERASE_MIN_SIZE; i+=4) {
-		retry = 3;
-		while(retry--)
+	for (i = 0; i < erase_count; i+=4) {
+//		retry = 3;
+//		while(retry--)
 		{
 			flash_status = HAL_FLASHEx_DATAEEPROM_Erase(FLASH_TYPEERASEDATA_WORD, addr + i);
 			if (flash_status != HAL_OK) {
@@ -129,35 +139,20 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 			}
 		}
 	}
+	HAL_FLASHEx_DATAEEPROM_Lock();
 #else
+	HAL_FLASHEx_DATAEEPROM_Unlock();
 	for (i = 0; i < size; i++) {
-		retry = 3;
-		while(retry--)
 		{
 			flash_status = HAL_FLASHEx_DATAEEPROM_Erase(FLASH_TYPEERASEDATA_BYTE, addr + i);
 			if (flash_status != HAL_OK) {
 				result = EF_ERASE_ERR;
-				//break;
 			} else {
 				result = EF_NO_ERR;
 			}
 		}
 	}
-#endif
 	HAL_FLASHEx_DATAEEPROM_Lock();
-#else
-	HAL_FLASH_Unlock();
-	 /* Fill EraseInit structure*/
-	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
-	EraseInitStruct.PageAddress = addr;
-	EraseInitStruct.NbPages     = (erase_count*EF_ERASE_MIN_SIZE) / FLASH_PAGE_SIZE;
-
-	if (HAL_FLASHEx_Erase(&EraseInitStruct, &PAGEError) != HAL_OK)
-	{
-		result = EF_ERASE_ERR;
-	}
-
-	HAL_FLASH_Lock();
 #endif
     return result;
 }
@@ -184,22 +179,22 @@ void ef_erase_all(void)
 EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size) {
     EfErrCode result = EF_NO_ERR;
     uint32_t i;
-    uint8_t read_data;
-    uint8_t *w_data = (uint8_t *)buf;
+#if(EF_ERASE_MIN_SIZE == 4)
+    uint32_t read_data;
+    uint32_t *w_data = (uint32_t *)buf;
     uint8_t retry = 0;
     /* You can add your code under here. */
     //EF_ASSERT(addr % 4 == 0);
 
-#ifdef USE_EEPROM
 	HAL_FLASHEx_DATAEEPROM_Unlock();
-	for (i = 0; i < size; i++, w_data++, addr++) {
+	for (i = 0; i < size; i+=4, w_data++, addr+=4) {
 		retry = 3;
 		while(retry--)
 		{
 			/* write data */
 			//HAL_FLASHEx_DATAEEPROM_Erase(FLASH_TYPEERASEDATA_BYTE, addr);
-			HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_FASTBYTE, addr, *w_data);
-			read_data = *(__IO uint8_t *)addr;
+			HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_FASTWORD, addr, *w_data);
+			read_data = *(__IO uint32_t *)addr;
 			/* check data */
 			if (read_data != *w_data) {
 				result = EF_WRITE_ERR;
@@ -212,19 +207,31 @@ EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size) {
 	}
 	HAL_FLASHEx_DATAEEPROM_Lock();
 #else
-	HAL_FLASH_Unlock();
+	uint8_t read_data;
+	uint8_t *data_8 = (uint8_t *)buf;
+	uint8_t retry = 0;
+	/* You can add your code under here. */
+	//EF_ASSERT(addr % 4 == 0);
 
-	for (i = 0; i < size; i=i+4, buf++, addr=addr+4) {
-		HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, addr, *buf);
-		read_data = *(__IO uint32_t *)addr;
-		/* check data */
-		if (read_data != *buf) {
-			result = EF_WRITE_ERR;
-			break;
+	HAL_FLASHEx_DATAEEPROM_Unlock();
+	for (i = 0; i < size; i++, data_8++, addr++) {
+//		retry = 3;
+//		while(retry--)
+		{
+			/* write data */
+			HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_FASTBYTE, addr, *data_8);
+			read_data = *(__IO uint8_t *)addr;
+			/* check data */
+			if (read_data != *data_8) {
+				result = EF_WRITE_ERR;
+			} else {
+				result = EF_NO_ERR;
+				//break;
+			}
+
 		}
 	}
-
-	HAL_FLASH_Lock();
+	HAL_FLASHEx_DATAEEPROM_Lock();
 #endif
     return result;
 }
