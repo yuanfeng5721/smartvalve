@@ -13,7 +13,7 @@
 #include <time.h>
 #include "mqtt.h"
 
-#define DP_MAX_NUMBER       8
+#define DP_MAX_NUMBER       9
 #define STROE_MAX_NUMBER    12
 
 typedef struct {

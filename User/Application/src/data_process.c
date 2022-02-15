@@ -33,8 +33,10 @@ osMessageQId dataProcessQueueHandle;
 //int battery;
 //int openning;
 //int battery_usm;
-//int overflow;
+//int flow
 //int signal;
+//int overflow;
+
 dp_t dp_data[DP_MAX_NUMBER] = {
 		{.name = "battery_usm",},
 		{.name = "openning"},
@@ -42,6 +44,7 @@ dp_t dp_data[DP_MAX_NUMBER] = {
 		{.name = "front_press",},
 		{.name = "battery",},
 		{.name = "temperature",},
+		{.name = "flow",},
 		{.name = "signal",},
 		{.name = "overflow",}
 };
@@ -226,11 +229,11 @@ void record_sensor_data(time_t t, uint16_t record_item)
 		dp_data[i].dt[record_item].t = time;
 		dp_data[i].dt[record_item].isOk = true;
 	}
-	dp_data[i].dt[record_item].v = at_device_get_rssi();
+	dp_data[i].dt[record_item].v = Q;
 	dp_data[i].dt[record_item].t = time;
 	dp_data[i].dt[record_item].isOk = true;
 	i++;
-	dp_data[i].dt[record_item].v = Q;
+	dp_data[i].dt[record_item].v = at_device_get_rssi();
 	dp_data[i].dt[record_item].t = time;
 	dp_data[i].dt[record_item].isOk = true;
 }
