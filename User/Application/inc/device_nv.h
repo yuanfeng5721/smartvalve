@@ -45,7 +45,7 @@
 //#define NV_VERSION 1
 //#define FORCE_UPDATE_NV "no" ///"yes" is force update nv, "no" don't update nv
 
-#define SW_VERSION "V1.0.0"
+#define SW_VERSION "V1.0.1"
 #define HW_VERSION "V1.0"
 
 
@@ -56,6 +56,21 @@ typedef enum{
 	NORMAL_MODE = 2,
 	MAX_MODE = 3,
 }BootMode;
+
+typedef enum{
+	SAMPLE_5MIN 	= 5,
+	SAMPLE_10MIN  	= 10,
+	SAMPLE_20MIN 	= 20,
+}SampleFreq;
+
+typedef enum{
+	UPDATE_5MIN 	= 5,
+	UPDATE_10MIN  	= 10,
+	UPDATE_20MIN 	= 20,
+}UpdateFreq;
+
+#define CHECK_SAMPLE_FREQ(f) ((f != SAMPLE_5MIN && f != SAMPLE_10MIN && f != SAMPLE_20MIN)?SAMPLE_5MIN:f)
+#define CHECK_UPDATE_FREQ(f) ((f != UPDATE_5MIN && f != UPDATE_10MIN && f != UPDATE_20MIN)?UPDATE_20MIN:f)
 
 /*********************************************************************
  *

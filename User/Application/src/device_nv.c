@@ -4,7 +4,7 @@
  *  Created on: 2022年1月6日
  *      Author: boboowang
  */
-
+#define LOG_TAG "NV"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -88,8 +88,8 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 #else
 		MAKE_NV_ITEM_INT(NV_VERSION,			NVVERSION),
 		MAKE_NV_ITEM_INT(BOOT_MODE,	    		0),
-		MAKE_NV_ITEM_INT(UPDATE_FREQ,			20),
-		MAKE_NV_ITEM_INT(SAMPLE_FREQ,			20),
+		MAKE_NV_ITEM_INT(UPDATE_FREQ,			5),
+		MAKE_NV_ITEM_INT(SAMPLE_FREQ,			5),
 		MAKE_NV_ITEM_INT(WAKEUP_COUNT,			0),
 		MAKE_NV_ITEM_INT(NV_F,					1),
 		MAKE_NV_ITEM_INT(NV_WARRING_FLAG,		0),
