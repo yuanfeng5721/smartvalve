@@ -1,5 +1,5 @@
 
-
+#define LOG_TAG "BOARD"
 #include <stdint.h>
 #include <stdbool.h>
 #include "stm32l1xx_hal.h"
