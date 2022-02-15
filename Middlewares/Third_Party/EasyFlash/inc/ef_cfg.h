@@ -96,7 +96,7 @@
 /*#define LOG_AREA_SIZE */            /* @note you must define it for a value if you used log */
 
 /* print debug information of flash */
-#define PRINT_DEBUG
+//#define PRINT_DEBUG
 #define MY_PRINT_DEBUG
 #define EF_STR_ENV_VALUE_MAX_SIZE     256
 #define EF_DEFAULT_ENV_ITEM           1
