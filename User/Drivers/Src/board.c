@@ -67,6 +67,26 @@ void sensors_power(bool onoff)
 	GPIO_WRITE(sensor_pwr_en2_GPIO_Port, sensor_pwr_en2_Pin, (GPIO_PinState) onoff);
 	GPIO_WRITE(sensor_pwr_en1_GPIO_Port, sensor_pwr_en1_Pin, (GPIO_PinState) onoff);
 }
+
+/** @brief  ble reset control
+  * @param  onoff 1: reset pin high; 0: reset pin low
+  * @retval None
+  */
+void ble_reset_pin(bool onoff)
+{
+	LOGD("ble_reset_pin: %d \r\n", onoff);
+	GPIO_WRITE(bt_rst_GPIO_Port, bt_rst_Pin, (GPIO_PinState) onoff);
+}
+
+/** @brief  ble wakeup control
+  * @param  onoff 1: wakeup pin high; 0: wakeup pin low
+  * @retval None
+  */
+void ble_wakeup_pin(bool onoff)
+{
+	LOGD("ble_wakeup_pin: %d \r\n", onoff);
+	GPIO_WRITE(mcu_wakeup_bt_GPIO_Port, mcu_wakeup_bt_Pin, (GPIO_PinState) onoff);
+}
 /******************************************************************************
  *                                platform tools
  ******************************************************************************/

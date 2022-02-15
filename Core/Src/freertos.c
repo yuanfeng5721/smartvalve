@@ -56,9 +56,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-osThreadId modemTaskHandle;
-osThreadId bleTaskHandle;
-osThreadId rs485TaskHandle;
+//osThreadId modemTaskHandle;
+//osThreadId bleTaskHandle;
+//osThreadId rs485TaskHandle;
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -114,86 +114,86 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
   /* place for user code */
 }
 
-void StartModemTask(void const * argument)
-{
-	//modem_init();
+//void StartModemTask(void const * argument)
+//{
+//	//modem_init();
+//
+//	while (1) {
+//
+//		osDelay(2000);
+//	}
+//}
 
-	while (1) {
+//u16 CavanUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
+//{
+//	u8 *buff_bak, *buff_end;
+//	u32 ticks;
+//
+//	/* Check that a Rx process is not already ongoing */
+//	if (huart->RxState != HAL_UART_STATE_READY) {
+//		return 0;
+//	}
+//
+//	/* Process Locked */
+//	__HAL_LOCK(huart);
+//
+//	huart->ErrorCode = HAL_UART_ERROR_NONE;
+//	huart->RxState = HAL_UART_STATE_BUSY_RX;
+//	huart->ReceptionType = HAL_UART_RECEPTION_STANDARD;
+//
+//	huart->RxXferSize = size;
+//	huart->RxXferCount = size;
+//
+//	/* Process Unlocked */
+//	__HAL_UNLOCK(huart);
+//
+//	buff_bak = buff;
+//	buff_end = buff + size;
+//	ticks = HAL_GetTick() + timeout;
+//
+//	while (buff < buff_end) {
+//		if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) != 0) {
+//			ticks = HAL_GetTick() + timeout;
+//			*buff++ = huart->Instance->DR;
+//		} else if (buff == buff_bak || ticks > HAL_GetTick()) {
+//			osThreadYield();
+//		} else {
+//			break;
+//		}
+//	}
+//
+//    huart->RxState = HAL_UART_STATE_READY;
+//
+//	return buff - buff_bak;
+//}
 
-		osDelay(2000);
-	}
-}
-
-u16 CavanUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
-{
-	u8 *buff_bak, *buff_end;
-	u32 ticks;
-
-	/* Check that a Rx process is not already ongoing */
-	if (huart->RxState != HAL_UART_STATE_READY) {
-		return 0;
-	}
-
-	/* Process Locked */
-	__HAL_LOCK(huart);
-
-	huart->ErrorCode = HAL_UART_ERROR_NONE;
-	huart->RxState = HAL_UART_STATE_BUSY_RX;
-	huart->ReceptionType = HAL_UART_RECEPTION_STANDARD;
-
-	huart->RxXferSize = size;
-	huart->RxXferCount = size;
-
-	/* Process Unlocked */
-	__HAL_UNLOCK(huart);
-
-	buff_bak = buff;
-	buff_end = buff + size;
-	ticks = HAL_GetTick() + timeout;
-
-	while (buff < buff_end) {
-		if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) != 0) {
-			ticks = HAL_GetTick() + timeout;
-			*buff++ = huart->Instance->DR;
-		} else if (buff == buff_bak || ticks > HAL_GetTick()) {
-			osThreadYield();
-		} else {
-			break;
-		}
-	}
-
-    huart->RxState = HAL_UART_STATE_READY;
-
-	return buff - buff_bak;
-}
-
-void StartBleTask(void const * argument)
-{
-	u8 buff[512];
-
-	while (1) {
-		u16 length = CavanUartRead(&huart2, buff, sizeof(buff), 20);
-		if (length > 0) {
-			HAL_UART_Transmit(&huart2, buff, length, length * 10);
-		}
-	}
-}
-
-void StartRs485Task(void const * argument)
-{
-	u8 buff[512];
-
-	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
-
-	while (1) {
-		u16 length = CavanUartRead(&huart4, buff, sizeof(buff), 20);
-		if (length > 0) {
-			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
-			HAL_UART_Transmit(&huart4, buff, length, length * 10);
-			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
-		}
-	}
-}
+//void StartBleTask(void const * argument)
+//{
+//	u8 buff[512];
+//
+//	while (1) {
+//		u16 length = CavanUartRead(&huart2, buff, sizeof(buff), 20);
+//		if (length > 0) {
+//			HAL_UART_Transmit(&huart2, buff, length, length * 10);
+//		}
+//	}
+//}
+//
+//void StartRs485Task(void const * argument)
+//{
+//	u8 buff[512];
+//
+//	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
+//
+//	while (1) {
+//		u16 length = CavanUartRead(&huart4, buff, sizeof(buff), 20);
+//		if (length > 0) {
+//			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
+//			HAL_UART_Transmit(&huart4, buff, length, length * 10);
+//			HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_RESET);
+//		}
+//	}
+//}
 /* USER CODE END GET_TIMER_TASK_MEMORY */
 
 /**
