@@ -17,10 +17,18 @@
 #include "shell.h"
 #include "cmsis_os.h"
 #include "utils_timer.h"
+#include "utils_ringbuff.h"
 
-#define SHELL_PRINT_BUFF_SIZE  256
-static uint8_t print_buff[SHELL_PRINT_BUFF_SIZE] = {0};
+#define SHELL_UART_RECV_IRQ
+#define SHELL_RING_BUFF_SIZE   512
+//#define SHELL_PRINT_BUFF_SIZE  256
+#define Shell_IRQHandler HAL_UART5_IrqCallback
+#define shell_print(format, args...) printf(format, ##args)
+
+//static uint8_t print_buff[SHELL_PRINT_BUFF_SIZE] = {0};
 static bool g_connected = false;
+sRingbuff g_shell_ringbuff;
+static bool shell_inited = false;
 
 /************************************************************************************************/
 bool nv_write_cmd(char *args[], uint8_t argc, uint16_t len);
@@ -59,10 +67,10 @@ bool erase_nv_cmd(char *args[], uint8_t argc, uint16_t len );
 
 static const cli_cmd g_cmd[]=
 {
+	{"set_mode",1,"set device mode", set_mode_cmd, NULL},
 	{"nv_wr",2,"write nv item", nv_write_cmd, NULL},
 	{"nv_rd",1,"read nv item", nv_read_cmd, NULL},
 	{"moto_ctl",2,"control moto", moto_control_cmd, NULL},
-	{"set_mode",1,"set device mode", set_mode_cmd, NULL},
 	{"read_sensor",1,"read sensor value", read_sendor_cmd, NULL},
 //	{"set_network",1,"set network mode", set_network_cmd, NULL},
 //	{"get_network",0,"get network mode", get_network_cmd, NULL},
@@ -71,8 +79,8 @@ static const cli_cmd g_cmd[]=
 //	{"set_moto_zero", 0, "set moto zero point", set_moto_zero, NULL},
 	{"set_F",1,"set f", set_f_cmd, NULL},
 	{"get_F",0,"get f", get_f_cmd, NULL},
-	{"set_sample_interval",1,"set sample interval", set_sample_interval_cmd, NULL},
-	{"set_update_interval",1,"set update interval", set_update_interval_cmd, NULL},
+	{"set_sample_freq",1,"set sample freq", set_sample_interval_cmd, NULL},
+	{"set_update_freq",1,"set update freq", set_update_interval_cmd, NULL},
 //	{"set_plus_pre_circle",1,"set plus value for one circle", set_plus_pre_circle_cmd, NULL},
 //	{"get_plus_pre_circle",0,"get plus value for one circle", get_plus_pre_circle_cmd, NULL},
 	{"set_z",1,"set zeta", set_z_cmd, NULL},
@@ -104,18 +112,18 @@ bool get_connect_flag(void)
 	return g_connected;
 }
 
-void shell_print(const char *format, ...)
-{
-	size_t length = 0;
-	va_list ap;
-
-	va_start(ap, format);
-	//LOG_RAW(format, ap);
-	length = vsnprintf(print_buff, SHELL_PRINT_BUFF_SIZE, format, ap);
-	va_end(ap);
-
-	HAL_UART_Transmit(&huart5, print_buff, length, length * 10);
-}
+//void shell_print(const char *format, ...)
+//{
+//	//size_t length = 0;
+//	va_list ap;
+//
+//	va_start(ap, format);
+//	printf(format, ap);
+//	//length = vsnprintf(print_buff, SHELL_PRINT_BUFF_SIZE, format, ap);
+//	va_end(ap);
+//
+//	//HAL_UART_Transmit(&huart5, print_buff, length, length * 10);
+//}
 
 bool sync_cmd(char *args[], uint8_t argc, uint16_t len )
 {
@@ -159,7 +167,6 @@ bool nv_write_cmd(char *args[], uint8_t argc, uint16_t len )
 bool nv_read_cmd(char *args[], uint8_t argc, uint16_t len )
 {
 	char *key = NULL, *value = NULL;
-	char buf[64]={0};
 	key = args[0];
 
 	shell_print("%s: key=%s\r\n",__FUNCTION__,key);
@@ -274,12 +281,12 @@ bool set_angle_zero(char *args[], uint8_t argc, uint16_t len)
 	Sensors_Power(false);
 
 	shell_print("\r\nok\r\n");
-
+	return true;
 }
 
 bool set_f_cmd(char *args[], uint8_t argc, uint16_t len )
 {
-	char *key = NULL, *value = NULL;
+	char *value = NULL;
 
 	value = args[0];
 
@@ -312,11 +319,11 @@ bool get_f_cmd(char *args[], uint8_t argc, uint16_t len )
 
 bool set_sample_interval_cmd(char *args[], uint8_t argc, uint16_t len )
 {
-	char mode = '0';
+	char *mode = NULL;
 	uint8_t interval = 0;
 
-	mode = args[0][0];
-	shell_print("%s: mode = %c\r\n",__FUNCTION__, mode);
+	mode = args[0];
+	shell_print("%s: mode = %s\r\n",__FUNCTION__, mode);
 
 	interval = atoi(mode);
 	if(interval == 5 || interval == 10 || interval == 20)
@@ -332,11 +339,11 @@ bool set_sample_interval_cmd(char *args[], uint8_t argc, uint16_t len )
 
 bool set_update_interval_cmd(char *args[], uint8_t argc, uint16_t len )
 {
-	char mode = '0';
+	char *mode = NULL;
 	uint8_t interval = 0;
 
-	mode = args[0][0];
-	shell_print("%s: mode = %c\r\n",__FUNCTION__, mode);
+	mode = args[0];
+	shell_print("%s: mode = %s\r\n", __FUNCTION__, mode);
 
 	interval = atoi(mode);
 	if(interval == 5 || interval == 10 || interval == 20)
@@ -457,7 +464,7 @@ bool get_q_d_cmd(char *args[], uint8_t argc, uint16_t len)
 bool set_valve_angle_cmd(char *args[], uint8_t argc, uint16_t len)
 {
 	char *value = NULL;
-	float angle = 0;
+	uint8_t angle = 0;
 
 	value = args[0];
 
@@ -531,8 +538,6 @@ bool erase_nv_cmd(char *args[], uint8_t argc, uint16_t len )
 		shell_print("\r\nfail\r\n");
 		return false;
 	}
-	shell_print("easyflash init!!! \r\n");
-	init_nvitems();
 
 	shell_print("\r\nOK\r\n");
 
@@ -540,58 +545,85 @@ bool erase_nv_cmd(char *args[], uint8_t argc, uint16_t len )
 }
 /**************************************************************************************************/
 
-u16 ShellUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
+void shell_uart_rx_isr_cb(uint8_t *pdata, uint8_t len)
 {
-	u8 *buff_bak, *buff_end;
-	u32 ticks;
-
-	/* Check that a Rx process is not already ongoing */
-	if (huart->RxState != HAL_UART_STATE_READY) {
-		return 0;
+	if(shell_inited) {
+		(void)ring_buff_push_data(&g_shell_ringbuff, pdata, len);
 	}
-
-	/* Process Locked */
-	__HAL_LOCK(huart);
-
-	huart->ErrorCode = HAL_UART_ERROR_NONE;
-	huart->RxState = HAL_UART_STATE_BUSY_RX;
-	huart->ReceptionType = HAL_UART_RECEPTION_STANDARD;
-
-	huart->RxXferSize = size;
-	huart->RxXferCount = size;
-
-	/* Process Unlocked */
-	__HAL_UNLOCK(huart);
-
-	buff_bak = buff;
-	buff_end = buff + size;
-	ticks = HAL_GetTick() + timeout;
-
-	while (buff < buff_end) {
-		if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) != 0) {
-			ticks = HAL_GetTick() + timeout;
-			*buff++ = huart->Instance->DR;
-		} else if (buff == buff_bak || ticks > HAL_GetTick()) {
-			osThreadYield();
-		} else {
-			break;
-		}
-	}
-
-    huart->RxState = HAL_UART_STATE_READY;
-
-	return buff - buff_bak;
 }
 
-bool get_char(UART_HandleTypeDef *huart, u8 *buff, u32 timeout)
+void Shell_IRQHandler(UART_HandleTypeDef *huart)
+{
+	uint8_t ch;
+    if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) == SET) {
+        ch = (uint8_t)READ_REG(huart->Instance->DR) & 0xFF;
+        /*this callback for at_client*/
+        shell_uart_rx_isr_cb(&ch, 1);
+        //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    }
+    __HAL_UART_CLEAR_PEFLAG(huart);
+}
+
+//u16 ShellUartRead(UART_HandleTypeDef *huart, u8 *buff, u16 size, u32 timeout)
+//{
+//	u8 *buff_bak, *buff_end;
+//	u32 ticks;
+//
+//	/* Check that a Rx process is not already ongoing */
+//	if (huart->RxState != HAL_UART_STATE_READY) {
+//		return 0;
+//	}
+//
+//	/* Process Locked */
+//	__HAL_LOCK(huart);
+//
+//	huart->ErrorCode = HAL_UART_ERROR_NONE;
+//	huart->RxState = HAL_UART_STATE_BUSY_RX;
+//	huart->ReceptionType = HAL_UART_RECEPTION_STANDARD;
+//
+//	huart->RxXferSize = size;
+//	huart->RxXferCount = size;
+//
+//	/* Process Unlocked */
+//	__HAL_UNLOCK(huart);
+//
+//	buff_bak = buff;
+//	buff_end = buff + size;
+//	ticks = HAL_GetTick() + timeout;
+//
+//	while (buff < buff_end) {
+//		if (__HAL_UART_GET_FLAG(huart, UART_FLAG_RXNE) != 0) {
+//			ticks = HAL_GetTick() + timeout;
+//			*buff++ = huart->Instance->DR;
+//		} else if (buff == buff_bak || ticks > HAL_GetTick()) {
+//			osThreadYield();
+//		} else {
+//			break;
+//		}
+//	}
+//
+//    huart->RxState = HAL_UART_STATE_READY;
+//
+//	return buff - buff_bak;
+//}
+
+bool get_char(UART_HandleTypeDef *huart, char *buff, uint32_t timeout)
 {
 	Timer timer;
 
 	countdown_ms(&timer, timeout);
 	do {
+#ifndef SHELL_UART_RECV_IRQ
 		if(HAL_UART_Receive(huart, buff, 1, timeout) != HAL_OK) {
 			continue;
-		} else {
+		}
+#else
+        if (0 ==
+            ring_buff_pop_data(&g_shell_ringbuff, (uint8_t *)buff, 1)) {  // push data to ringbuff @ AT_UART_IRQHandler
+            continue;
+        }
+#endif
+		else {
 			break;
 		}
 	} while (!expired(&timer));
@@ -608,7 +640,7 @@ uint16_t get_line(UART_HandleTypeDef *huart, char *cmdbuf, size_t size, uint32_t
     int  read_len = 0;
     char ch = 0, last_ch = 0;
     bool is_full = false;
-    int  ret;
+    bool  ret;
 
     while (1) {
         ret = get_char(huart, &ch, timeout);
@@ -626,7 +658,7 @@ uint16_t get_line(UART_HandleTypeDef *huart, char *cmdbuf, size_t size, uint32_t
         /* is newline or URC data */
         if ((ch == '\n' && last_ch == '\r')) {
             if (is_full) {
-            	LOGI("cmd buffer size small!!!!!!\r\n");
+            	LOGE("cmd buffer size small!!!!!!\r\n");
                 return 0;
             }
             break;
@@ -670,6 +702,8 @@ void cli_cmd_service(void)
 	char delims[] = " ";
 	char *str = NULL;
 
+	BootMode bootmode = device_get_bootmode();
+
 	do
 	{
 	//1. get cmd and parameter
@@ -686,7 +720,7 @@ void cli_cmd_service(void)
 			cmd[len-1] = '\0';
 			cmd[len-2] = '\0';
 			len = len - 2;
-			LOGI("cmd >  %s \r\n",cmd);
+			LOGD("cmd >  %s \r\n",cmd);
 			for(uint8_t i=0; i<sizeof(g_cmd)/sizeof(cli_cmd); i++)
 			{
 				j = 0;
@@ -700,29 +734,41 @@ void cli_cmd_service(void)
 						while(str!=NULL)
 						{
 							argv[j] = str;
-							LOGI( "arg[%d] : %s\r\n", j, argv[j++] );
+							LOGD( "arg[%d] : %s\r\n", j, argv[j]);
+							j++;
 							str = strtok( NULL, delims );
 						}
 					}
-					g_cmd[i].pxCmdHook(argv, g_cmd[i].uExpParam, param_len);
+
+					if(((bootmode != CONFIG_MODE) && (i == 0)) || (bootmode == CONFIG_MODE)) {
+						g_cmd[i].pxCmdHook(argv, g_cmd[i].uExpParam, param_len);
+					}
 					//send_result(g_cmd[i].pResult);
 					break;
 				}
 			}
 		}
-		osDelay(50);
+		osDelay(200);
 	}while(true);
 }
 
 
 
-#define SHELL_TASK_PRIORITY      (osPriorityNormal+2)
+#define SHELL_TASK_PRIORITY      (osPriorityNormal+1)
 
 osThreadId shellTaskHandle;
 
 
 void StartShellTask(void const * argument)
 {
+	char *ringBuff = NULL;
+	ringBuff = pvPortMalloc(SHELL_RING_BUFF_SIZE);
+	if (NULL == ringBuff) {
+		LOGE("malloc ringbuff err \r\n");
+		return;
+	}
+	ring_buff_init(&g_shell_ringbuff, ringBuff, SHELL_RING_BUFF_SIZE);
+	shell_inited = true;
 	while (1) {
 		cli_cmd_service();
 	}
@@ -730,6 +776,7 @@ void StartShellTask(void const * argument)
 
 void ShellTaskInit(void)
 {
+	shell_inited = false;
 	osThreadDef(shellTask, StartShellTask, SHELL_TASK_PRIORITY, 0, 512);
 	shellTaskHandle = osThreadCreate(osThread(shellTask), NULL);
 }
