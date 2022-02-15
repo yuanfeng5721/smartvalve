@@ -47,7 +47,7 @@ void HAL_SleepMs(_IN_ uint32_t ms)
 void HAL_Printf(_IN_ const char *fmt, ...)
 {
 #if 1
-	static char buff[256];
+	static char buff[512];
 	va_list list;
 	int length;
 	
@@ -61,13 +61,17 @@ void HAL_Printf(_IN_ const char *fmt, ...)
 	}
 
 #if 1
-	HAL_UART_Transmit(&huart5, buff, length, 0xFFFF);
+	HAL_UART_Transmit(&huart5, (uint8_t *)buff, length, 0xFFFF);
 #else
 	HAL_GPIO_WritePin(uart4_rts_GPIO_Port, uart4_rts_Pin, GPIO_PIN_SET);
 	HAL_UART_Transmit(&huart4, buff, length, length * 10);
 #endif
 #else
-	printf(fmt, ##);
+	va_list list;
+
+	va_start(list, fmt);
+	printf(fmt, list);
+	va_end(list);
 #endif
 }
 

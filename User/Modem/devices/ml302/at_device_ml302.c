@@ -1615,7 +1615,7 @@ static int ml302_mqtt_pub(const char *topic, const void *buff, u16 length)
 	//$sys/{pid}/{device-name}/dp/post/json
 	at_exec_cmd(resp, "AT+MMQTTPUB=0,\"$sys/%s/%s/%s\",%d", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic, cavan_net_input_length);
 
-	if(cavan_wait_send_complete(2000) && cavan_wait_pub_complete(2000) /*&& at_resp_get_line_by_kw(resp, "+MMQTTPUB:")*/) {
+	if(cavan_wait_send_complete(2000) && cavan_wait_pub_complete(4000) /*&& at_resp_get_line_by_kw(resp, "+MMQTTPUB:")*/) {
 		ret = QCLOUD_RET_SUCCESS;
 	} else {
 		ret = QCLOUD_ERR_MQTT_PUB_FAIL;

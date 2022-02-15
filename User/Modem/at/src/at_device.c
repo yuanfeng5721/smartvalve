@@ -87,10 +87,10 @@ int modem_init(void)
 }
 int modem_deinit(void)
 {
-	if(!device_has_initialled) {
-		Log_i("at device not initialled!!!");
-		return QCLOUD_RET_SUCCESS;
-	}
+//	if(!device_has_initialled) {
+//		Log_i("at device not initialled!!!");
+//		return QCLOUD_RET_SUCCESS;
+//	}
 		
 	at_socket_deinit();
 	at_device_deinit();

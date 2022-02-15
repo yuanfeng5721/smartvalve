@@ -22,8 +22,8 @@
 
 typedef struct{
 	uint8_t mqtt_conn_id;
-	char clientid[12];
-	char username[12];
+	char clientid[20];
+	char username[20];
 }mqtt_clinet_t;
 
 int at_device_ml302_init(void);
