@@ -83,6 +83,27 @@ void set_local_time(time_t time)
 	MX_RTC_Set_Time(time);
 }
 
+int calc_wakeup_count(uint16_t interval_s)
+{
+	time_t t1,t2;
+	struct tm *gt;
+	uint16_t wakeupcount = 0;
+	uint16_t interval_min = interval_s/60;
+
+	t1=time(NULL);
+	gt = localtime(&t1);
+	gt->tm_min = (gt->tm_min/interval_min+1)*interval_min;
+	gt->tm_sec = 0;
+	t2 = mktime(gt);
+
+	LOGD("t2 = %d,t2|DAY_SECONDS_MASK = %d\r\n", t2, t2%DAY_SECONDS_MASK);
+
+	wakeupcount = ((((t2%DAY_SECONDS_MASK)==0)?(interval_min*60*((24*60)/interval_min)):(t2%DAY_SECONDS_MASK))/(interval_min*60) - 1)%((24*60)/interval_min);
+	LOGD("wakeupcount = %d, wakeup interval = %d min\r\n", wakeupcount, interval_min);
+
+	return wakeupcount;
+}
+
 int calc_wakeup_time(time_t *t, uint16_t interval_s)
 {
 	time_t t1,t2;
@@ -162,8 +183,8 @@ time_t SleepAndWakeUp(uint32_t interval_s)
 
 	MX_RTC_Wakeup_Start(sleeptime);
 	enter_stop_mode();
-	SystemClock_Config();
 	MX_RTC_Wakeup_Stop();
+	SystemClock_Config();
 	LOGD("wakeup!!!!!!\r\n");
 	return next_time;
 }
