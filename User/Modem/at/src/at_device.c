@@ -274,7 +274,7 @@ int mqtt_publish(const char *topic, const void *buff, uint16_t length)
 	int ret = at_mqtt_publish(topic, buff, length);
 
 	if (ret < 0) {
-		Log_e("fail to publish topic: (%s: %s)!!!", topic, buff);
+		Log_e("fail to publish topic: (%s)!!!", topic);
 	} else {
 		Log_d("published topic success!!!");
 	}

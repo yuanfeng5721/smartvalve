@@ -880,6 +880,10 @@ int at_client_para_deinit(at_client_t client)
     char *ringBuff = client->pRingBuff->buffer;
     char *recvBuff = client->recv_buffer;
 
+    if (ringBuff)
+		HAL_Free(ringBuff);
+	if (recvBuff)
+		HAL_Free(recvBuff);
 
     ring_buff_deinit(&g_ring_buff);
 
@@ -904,11 +908,6 @@ int at_client_para_deinit(at_client_t client)
     }
 	client->parser = NULL;
 #endif
-
-	if (ringBuff)
-		HAL_Free(ringBuff);
-	if (recvBuff)
-		HAL_Free(recvBuff);
 
     return QCLOUD_RET_SUCCESS;
 }
@@ -947,8 +946,8 @@ int at_client_init(at_client_t *pClient)
 #if defined(AT_OS_USED) && defined(MULTITHREAD_ENABLED)
         //  create thread for at parser
         if (NULL != client->parser) {
-#define AT_PARSER_THREAD_STACK    512
-#define AT_PARSER_THREAD_PRIORITY 0 //osPriorityNormal
+#define AT_PARSER_THREAD_STACK    1024
+#define AT_PARSER_THREAD_PRIORITY 1 //osPriorityNormal
             //static ThreadParams thread_params = {0};
             thread_params.thread_func  = client->parser;
             thread_params.thread_name  = "at_client_parser";

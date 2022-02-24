@@ -806,19 +806,20 @@ HAL_StatusTypeDef HAL_FLASHEx_DATAEEPROM_Erase(uint32_t TypeErase, uint32_t Addr
     if(TypeErase == FLASH_TYPEERASEDATA_WORD)
     {
       /* Write 00000000h to valid address in the data memory */
-      *(__IO uint32_t *) Address = 0x00000000U;
+      //*(__IO uint32_t *) Address = 0x00000000U;
+      *(__IO uint32_t *) Address = 0xFFFFFFFFU;
     }
 
     if(TypeErase == FLASH_TYPEERASEDATA_HALFWORD)
     {
       /* Write 0000h to valid address in the data memory */
-      *(__IO uint16_t *) Address = (uint16_t)0x0000;
+      *(__IO uint16_t *) Address = (uint16_t)0xFFFF;
     }
 
     if(TypeErase == FLASH_TYPEERASEDATA_BYTE)
     {
       /* Write 00h to valid address in the data memory */
-      *(__IO uint8_t *) Address = (uint8_t)0x00;
+      *(__IO uint8_t *) Address = (uint8_t)0xFF;
     }
 
     status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);

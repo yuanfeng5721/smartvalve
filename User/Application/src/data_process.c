@@ -303,7 +303,7 @@ void DataProcessTask(void const * argument)
 		.u.buf = "567890",
 	};
 	uint16_t sample_count = 0;
-	float Q = 0.0;
+	//float Q = 0.0;
 
 	// init nvitem
 	init_nvitems();

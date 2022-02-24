@@ -20,8 +20,8 @@ osMessageQId bleQueueHandle;
 
 void StartBleTask(void const * argument)
 {
-	osMsgStatus status;
-	io_msg_t p_msg;
+	//osMsgStatus status;
+	//io_msg_t p_msg;
 
 	ble_hardware_init();
 

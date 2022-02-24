@@ -304,8 +304,9 @@ static void urc_mqtt_conn_func(const char *data, size_t size)
 static void urc_mqtt_disconn_func(const char *data, size_t size)
 {
 	int conn = 0, result = 0;
+	char *str = strchr(data, '+');
 
-	if (sscanf(data, "+MMQTTDISCON: %d,%d", &conn, &result) == 2) {
+	if (sscanf(str, "+MMQTTDISCON: %d,%d", &conn, &result) == 2) {
 		println("MMQTTDISCON: conn = %d, result = %d", conn, result);
 
 		if (result == 0) {
@@ -319,8 +320,9 @@ static void urc_mqtt_disconn_func(const char *data, size_t size)
 static void urc_mqtt_sub_func(const char *data, size_t size)
 {
 	int conn = 0, result = 0;
+	char *str = strchr(data, '+');
 
-	if (sscanf(data, "+MMQTTSUB: %d,%d", &conn, &result) == 2) {
+	if (sscanf(str, "+MMQTTSUB: %d,%d", &conn, &result) == 2) {
 		println("MMQTTSUB: conn = %d, result = %d", conn, result);
 
 		if (result == 0) {
@@ -334,8 +336,9 @@ static void urc_mqtt_sub_func(const char *data, size_t size)
 static void urc_mqtt_pub_func(const char *data, size_t size)
 {
 	int conn = 0, result = 0;
+	char *str = strchr(data, '+');
 
-	if (sscanf(data, "+MMQTTPUB: %d,%d", &conn, &result) == 2) {
+	if (sscanf(str, "+MMQTTPUB: %d,%d", &conn, &result) == 2) {
 		println("MMQTTPUB: conn = %d, result = %d", conn, result);
 
 		if (result == 0) {
@@ -804,17 +807,19 @@ bool cavan_send_MSSLSECWR(at_response_t rsp, u8 times)
 	while (times > 0) {
 		at_clearFlag(NET_INPUT_FLAG);
 
+		//at_set_end_sign('>');
 		cavan_net_input_set(mqtt_cert, sizeof(mqtt_cert) - 1);
 		at_exec_cmd(rsp, "AT+MSSLSECWR=1,0,%d", cavan_net_input_length);
 
 		if (cavan_wait_send_complete(2000) && at_resp_get_line_by_kw(rsp, "+MSSLSECWR")) {
+			//at_set_end_sign('\0');
 			return true;
 		}
 
 		at_delayms(1000);
 		times--;
 	}
-
+	//at_set_end_sign('\0');
 	return false;
 }
 
@@ -997,9 +1002,9 @@ static int ml302_init(void)
 #define CCLK_RETRY                     10
     at_response_t resp = NULL;
     int           ret;
-    int           i;
-	int 		  qi_arg[3] = {0};
-	char          parsed_data[20] = {0};
+//    int           i;
+//	int 		  qi_arg[3] = {0};
+//	char          parsed_data[20] = {0};
 	int           retry_num = INIT_RETRY;
 	
     resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
@@ -1068,7 +1073,7 @@ static int ml302_init(void)
 		at_delayms(100);
 
 #if CONFIG_MQTTS
-		if (!cavan_send_MSSLSECWR(resp, 10)) {
+		if (!cavan_send_MSSLSECWR(resp, 3)) {
 			ret = QCLOUD_ERR_FAILURE;
 			goto __exit;
 		}
@@ -1159,14 +1164,14 @@ static int ml302_ntp(time_t *t)
 			}
 
 			/* +CCLK: "18/12/22,18:33:12+32" */
-			if (at_resp_parse_line_args_by_kw(resp, "+CCLK:", "+CCLK: \"%d/%d/%d,%d:%d:%d%s",
+			if (at_resp_parse_line_args_by_kw(resp, "+CCLK:", "+CCLK: \"%d/%d/%d,%d:%d:%d%s\"",
 											  &year, &month, &day, &hour, &min, &sec, str_timezone) < 0)
 			{
 				at_delayms(500);
 				continue;
 			}
 			timezone = atoi(str_timezone)/4;
-
+			Log_d("time: %d-%d-%d %d:%d:%d %d\r\n", year, month, day, hour, min, sec, timezone);
 			set_local_time(make_data_time(year, month, day, hour, min, sec, timezone));
 			break;
 		}
@@ -1598,6 +1603,7 @@ static int ml302_mqtt_pub(const char *topic, const void *buff, u16 length)
 {
 	at_response_t resp = NULL;
 	int           ret;
+	uint8_t trycount = 3;
 
 	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
 	if (NULL == resp) {
@@ -1610,11 +1616,18 @@ static int ml302_mqtt_pub(const char *topic, const void *buff, u16 length)
 
 	at_clearFlag(NET_INPUT_FLAG);
 	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
-
+	//at_set_end_sign('>');
 	cavan_net_input_set(buff, length);
-	//$sys/{pid}/{device-name}/dp/post/json
-	at_exec_cmd(resp, "AT+MMQTTPUB=0,\"$sys/%s/%s/%s\",%d", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic, cavan_net_input_length);
 
+	while(trycount--)
+	{
+		//$sys/{pid}/{device-name}/dp/post/json
+		if(at_exec_cmd(resp, "AT+MMQTTPUB=0,\"$sys/%s/%s/%s\",%d", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic, cavan_net_input_length)==QCLOUD_RET_SUCCESS)
+		{
+			break;
+		}
+	}
+	//at_set_end_sign('\0');
 	if(cavan_wait_send_complete(2000) && cavan_wait_pub_complete(4000) /*&& at_resp_get_line_by_kw(resp, "+MMQTTPUB:")*/) {
 		ret = QCLOUD_RET_SUCCESS;
 	} else {

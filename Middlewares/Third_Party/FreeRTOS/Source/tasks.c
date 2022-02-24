@@ -336,6 +336,9 @@ typedef struct tskTaskControlBlock
 		uint8_t ucDelayAborted;
 	#endif
 
+	#if( portSTACK_GROWTH <= 0)
+		UBaseType_t     uxSizeOfStack;      /*< Support For CmBacktrace >*/
+	#endif
 } tskTCB;
 
 /* The old tskTCB name is maintained above then typedefed to the new TCB_t name
@@ -5036,4 +5039,27 @@ when performing module tests). */
 
 #endif
 
+/*< Support For CmBacktrace >*/
+uint32_t * vTaskStackAddr()
+{
+    return pxCurrentTCB->pxStack;
+}
 
+uint32_t vTaskStackSize()
+{
+    #if ( portSTACK_GROWTH > 0 )
+    
+    return (pxNewTCB->pxEndOfStack - pxNewTCB->pxStack + 1);
+    
+    #else /* ( portSTACK_GROWTH > 0 )*/
+    
+    return pxCurrentTCB->uxSizeOfStack;
+    
+    #endif /* ( portSTACK_GROWTH > 0 )*/
+}
+
+char * vTaskName()
+{
+    return pxCurrentTCB->pcTaskName;
+}
+/*-----------------------------------------------------------*/

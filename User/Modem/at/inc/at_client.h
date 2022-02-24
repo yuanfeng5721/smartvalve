@@ -29,7 +29,7 @@ extern "C" {
 #define AT_CMD_NAME_LEN 16
 #define AT_END_MARK_LEN 4
 
-#define CLINET_BUFF_LEN          (4096)//(1536)
+#define CLINET_BUFF_LEN          (1536)
 #define RING_BUFF_LEN            CLINET_BUFF_LEN*2  // uart ring buffer len
 #define GET_CHAR_TIMEOUT_MS      (100)
 #define CMD_RESPONSE_INTERVAL_MS (100)

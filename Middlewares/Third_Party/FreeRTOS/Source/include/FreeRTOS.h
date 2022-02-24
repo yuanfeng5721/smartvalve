@@ -1027,6 +1027,9 @@ typedef struct xSTATIC_TCB
 		uint8_t ucDummy21;
 	#endif
 
+	#if(portSTACK_GROWTH <= 0)
+        UBaseType_t     uxSizeOfStack;      /*< Support For CmBacktrace >*/
+	#endif /* ( portSTACK_GROWTH > 0 )*/
 } StaticTask_t;
 
 /*

@@ -33,6 +33,8 @@
 /* USER CODE BEGIN Includes */
 #define LOG_TAG "main"
 #include "log.h"
+#include "device_nv.h"
+#include "cm_backtrace.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +66,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void fault_test_by_div0(void);
 /* USER CODE END 0 */
 
 /**
@@ -90,13 +92,15 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  //log_init();
 
+  cm_backtrace_init("smartvalve2", "V1.0", SW_VERSION);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_UART5_Init();
+  //MX_UART5_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_UART4_Init();
@@ -113,7 +117,7 @@ int main(void)
   log_init();
 
   print_software_version();
-
+  //fault_test_by_div0();
   //test_nv_def();
   /* USER CODE END 2 */
 
@@ -232,7 +236,7 @@ void system_config_after_stop(void)
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_DMA_Init();
-	MX_UART5_Init();
+	//MX_UART5_Init();
 	MX_USART1_UART_Init();
 	MX_USART3_UART_Init();
 	MX_UART4_Init();
@@ -246,6 +250,38 @@ void system_config_after_stop(void)
 	MX_TIM7_Init();
 
 	log_init();
+}
+
+void fault_test_by_unalign(void) {
+    volatile int * SCB_CCR = (volatile int *) 0xE000ED14; // SCB->CCR
+    volatile int * p;
+    volatile int value;
+
+    *SCB_CCR |= (1 << 3); /* bit3: UNALIGN_TRP. */
+
+    p = (int *) 0x00;
+    value = *p;
+    printf("addr:0x%02X value:0x%08X\r\n", (int) p, value);
+
+    p = (int *) 0x04;
+    value = *p;
+    printf("addr:0x%02X value:0x%08X\r\n", (int) p, value);
+
+    p = (int *) 0x03;
+    value = *p;
+    printf("addr:0x%02X value:0x%08X\r\n", (int) p, value);
+}
+
+void fault_test_by_div0(void) {
+    volatile int * SCB_CCR = (volatile int *) 0xE000ED14; // SCB->CCR
+    int x, y, z;
+
+    *SCB_CCR |= (1 << 4); /* bit4: DIV_0_TRP. */
+
+    x = 10;
+    y = 0;
+    z = x / y;
+    printf("z:%d\n", z);
 }
 /* USER CODE END 4 */
 

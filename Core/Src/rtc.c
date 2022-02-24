@@ -135,10 +135,16 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 void MX_RTC_Set_Time(time_t time)
 {
 	struct tm *ts;
+	char buf[22];
+
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
+	LOGD("%s: %ld \r\n", __FUNCTION__, time);
 	ts = localtime(&time);
+
+	strftime(buf, 20, "%Y-%m-%d %H:%M:%S", ts);
+	LOGD("%s:time: %s!!!!\r\n", __FUNCTION__, buf);
 
 	sTime.Hours = ts->tm_hour;
 	sTime.Minutes = ts->tm_min;
@@ -148,7 +154,7 @@ void MX_RTC_Set_Time(time_t time)
 
 	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
 	{
-		assert_failed(__FILE__, __LINE__);
+		assert_failed((uint8_t *)__FILE__, __LINE__);
 	}
 
 	sDate.WeekDay = ts->tm_wday;

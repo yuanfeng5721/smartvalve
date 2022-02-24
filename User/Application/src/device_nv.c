@@ -35,7 +35,7 @@ uint32_t angle_default_value[ANGLE_DEFAULT_NUM] =
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20, \
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,0};
 
-const static uint32_t  NVVERSION	= 5;  //default nv version, if need update default nv, please  NV_VERSION + 1
+const static uint32_t  NVVERSION	= 6;  //default nv version, if need update default nv, please  NV_VERSION + 1
 //const static uint8_t  update_freq = 20;
 //const static uint32_t wakeup_count = 0;
 //const static uint8_t  F_value = 1;
@@ -47,7 +47,7 @@ const static uint32_t  NVVERSION	= 5;  //default nv version, if need update defa
 //const static uint16_t b_press_min = 0;
 //const static uint8_t  encoder_count = 100;
 //const static uint16_t moto_timer_count = 382;
-static BootMode boot_mode = CONFIG_MODE;
+//static BootMode boot_mode = CONFIG_MODE;
 
 const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 		MAKE_NV_ITEM_STR(NV_IMEI,				"865233030271820"),
@@ -88,7 +88,7 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 #else
 		MAKE_NV_ITEM_INT(NV_VERSION,			NVVERSION),
 		MAKE_NV_ITEM_INT(BOOT_MODE,	    		0),
-		MAKE_NV_ITEM_INT(UPDATE_FREQ,			5),
+		MAKE_NV_ITEM_INT(UPDATE_FREQ,			20),
 		MAKE_NV_ITEM_INT(SAMPLE_FREQ,			5),
 		MAKE_NV_ITEM_INT(WAKEUP_COUNT,			0),
 		MAKE_NV_ITEM_INT(NV_F,					1),
@@ -108,10 +108,19 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 #endif
 };
 
-void print_software_version(void)
+
+char* print_software_version(void)
 {
+	char ver_buff[64] = {0};
 	LOG_RAW("\r\nHardware Version: %s\r\n", HW_VERSION);
-	LOG_RAW("Software Version: %d-%02d-%02d_%s_%s\r\n", YEAR, MONTH + 1, DAY, __TIME__, SW_VERSION);
+//#ifdef DEBUG
+	sprintf(ver_buff, "%d-%02d-%02d_%s_%s", YEAR, MONTH + 1, DAY, __TIME__, SW_VERSION);
+//#else
+//	sprintf(ver_buff, "%d-%02d-%02d_%s_%s%s", YEAR, MONTH + 1, DAY, __TIME__, RELEASE_STR, SW_VERSION);
+//#endif
+	//LOG_RAW("Software Version: %d-%02d-%02d_%s_%s\r\n", YEAR, MONTH + 1, DAY, __TIME__, SW_VERSION);
+	LOG_RAW("Software Version: %s\r\n", ver_buff);
+	return ver_buff;
 }
 
 void print_array_nv(const char *key, uint32_t *value, size_t len)

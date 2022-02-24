@@ -98,8 +98,8 @@ static const cli_cmd g_cmd[]=
 //	{"encoder_test",1,"encoder test", encoder_test_cmd, NULL},
 	{"set_valve_angle",1,"set valve angel",set_valve_angle_cmd, NULL },
 	{"erase_nv",0,"erase nv items",erase_nv_cmd, NULL },
-	{"help",0,"this is help", help_cmd, NULL},
-	{"sync",1,"pc connect device", sync_cmd, NULL}
+//	{"help",0,"this is help", help_cmd, NULL},
+//	{"sync",1,"pc connect device", sync_cmd, NULL}
 };
 
 void set_connect_flag(bool flag)

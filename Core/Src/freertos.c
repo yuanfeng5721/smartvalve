@@ -37,6 +37,8 @@
 #include "device_nv.h"
 #include "rtc_wakeup.h"
 #include "shell.h"
+#include "ble_task.h"
+#include "data_process.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -240,6 +242,7 @@ void MX_FREERTOS_Init(void) {
   globle_event_init();
 
   ShellTaskInit();
+  BleTaskInit();
   SensorsTaskInit();
   DataProcessTaskInit();
   /* USER CODE END RTOS_THREADS */

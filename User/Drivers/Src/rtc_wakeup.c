@@ -50,6 +50,8 @@ time_t make_local_time(char *time)
 	struct tm ts = {0};
 	uint8_t yy=0,MM=0,dd=0,hh=0,mm=0,ss=0;
 
+	LOGD("%s\r\n", time);
+
 	sscanf(time, "%d/%d/%d,%d:%d:%d+", yy, MM, dd, hh, mm, ss);
 
 	ts.tm_hour = hh;
@@ -66,6 +68,7 @@ time_t make_local_time(char *time)
 time_t make_data_time(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t min, uint16_t sec, uint16_t timezone)
 {
 	struct tm ts = {0};
+	//char buf[22];
 
 	ts.tm_hour = hour;
 	ts.tm_min = min;
@@ -75,6 +78,8 @@ time_t make_data_time(uint16_t year, uint16_t month, uint16_t day, uint16_t hour
 	ts.tm_mday = day;
 	ts.tm_year = year+2000-1900;
 
+	//strftime(buf, 20, "%Y-%m-%d %H:%M:%S", &ts);
+	//LOGD("%s:time: %s!!!!\r\n", __FUNCTION__, buf);
 	return mktime(&ts);
 }
 
@@ -92,11 +97,11 @@ int calc_wakeup_count(uint16_t interval_s)
 
 	t1=time(NULL);
 	gt = localtime(&t1);
-	gt->tm_min = (gt->tm_min/interval_min+1)*interval_min;
+	gt->tm_min = ((gt->tm_min+1)/interval_min)*interval_min;
 	gt->tm_sec = 0;
 	t2 = mktime(gt);
 
-	LOGD("t2 = %d,t2|DAY_SECONDS_MASK = %d\r\n", t2, t2%DAY_SECONDS_MASK);
+	LOGD("t2 = %d, t2|DAY_SECONDS_MASK = %d \r\n", (int)t2, (int)t2%DAY_SECONDS_MASK);
 
 	wakeupcount = ((((t2%DAY_SECONDS_MASK)==0)?(interval_min*60*((24*60)/interval_min)):(t2%DAY_SECONDS_MASK))/(interval_min*60) - 1)%((24*60)/interval_min);
 	LOGD("wakeupcount = %d, wakeup interval = %d min\r\n", wakeupcount, interval_min);
@@ -109,7 +114,7 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s)
 	time_t t1,t2;
 	struct tm *gt;
 	uint16_t sleeptime = 0;
-	char buf[20];
+	char buf[22];
 	uint16_t interval_min = interval_s/60;
 
 	if(interval_s<60)

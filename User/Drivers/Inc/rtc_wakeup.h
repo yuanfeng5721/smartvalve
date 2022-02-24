@@ -26,5 +26,6 @@ int calc_wakeup_time(time_t *t, uint16_t interval_s);
 int calc_wakeup_count(uint16_t interval_s);
 
 time_t SleepAndWakeUp(uint32_t interval_s);
+void enter_stop_mode(void);
 
 #endif /* DRIVERS_INC_RTC_WAKEUP_H_ */

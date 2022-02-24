@@ -53,8 +53,9 @@ void modem_reset(void)
 {
 	LOGD("modem_reset \r\n");
 	GPIO_WRITE(modem_reset_GPIO_Port, modem_reset_Pin, GPIO_PIN_SET);
-	osDelay(500);
+	osDelay(800);
 	GPIO_WRITE(modem_reset_GPIO_Port, modem_reset_Pin, GPIO_PIN_RESET);
+	osDelay(3000);
 }
 
 /** @brief  sensors power control

@@ -40,6 +40,7 @@ void at_print_raw_cmd(const char *name, const char *buf, int size)
 	for(i=0; i<size; i++) {
 		snprintf(str+i,sizeof(str)-i,"%c", __is_print(buf[i]) ? buf[i]:'.');
 	}
+	str[511] = '\0';
 	HAL_Printf("%s: %s\n\r",name,str);
 }
 
