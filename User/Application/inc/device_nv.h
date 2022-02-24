@@ -8,6 +8,9 @@
 #ifndef APPLICATION_INC_DEVICE_NV_H_
 #define APPLICATION_INC_DEVICE_NV_H_
 
+#ifndef DEBUG
+#include "version.h"
+#endif
 #include "nvitem.h"
 
 #define DEFAULT_NV_ITEMS  DEFAULT_NV_ITEM_NUM   //22 items
@@ -45,7 +48,19 @@
 //#define NV_VERSION 1
 //#define FORCE_UPDATE_NV "no" ///"yes" is force update nv, "no" don't update nv
 
-#define SW_VERSION "V1.0.1"
+#define RELEASE_STR "Release_"
+#define DEBUG_STR 	"Debug"
+
+#define TOSTRING(p) #p
+#define JOINER(n, m) n TOSTRING(m)
+
+#ifndef DEBUG
+#define SW_VERSION JOINER(RELEASE_STR, BUILD_VERSION)
+#else
+
+#define SW_VERSION DEBUG_STR
+#endif
+
 #define HW_VERSION "V1.0"
 
 
@@ -98,7 +113,7 @@ extern uint32_t angle_default_value[ANGLE_DEFAULT_NUM];
 /***********************************************************************
  * 						function define
  ***********************************************************************/
-void print_software_version(void);
+char* print_software_version(void);
 int init_nvitems(void);
 
 uint32_t get_F(void);
