@@ -307,3 +307,12 @@ void Sensors_param_init(void)
 {
 	press_init();
 }
+
+float Sensors_Angle_Get(void)
+{
+	sensors_sample_t *sensors_data = NULL;
+
+	sensors_data = Sensors_Sample_Data();
+
+	return sensors_data[VALVE_ANGLE_CH].value;
+}

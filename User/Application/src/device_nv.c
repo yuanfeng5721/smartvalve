@@ -35,7 +35,10 @@ uint32_t angle_default_value[ANGLE_DEFAULT_NUM] =
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20, \
 	 20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,0};
 
-const static uint32_t  NVVERSION	= 6;  //default nv version, if need update default nv, please  NV_VERSION + 1
+UpdateFreq update_freq = 20;
+SampleFreq sample_freq = 5;
+
+const static uint32_t  NVVERSION	= 1;  //default nv version, if need update default nv, please  NV_VERSION + 1
 //const static uint8_t  update_freq = 20;
 //const static uint32_t wakeup_count = 0;
 //const static uint8_t  F_value = 1;
@@ -98,8 +101,8 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 		MAKE_NV_ITEM_INT(NV_F_PRESS_MIN,		0),
 		MAKE_NV_ITEM_INT(NV_B_PRESS_MAX,		100),
 		MAKE_NV_ITEM_INT(NV_B_PRESS_MIN,		0),
-		MAKE_NV_ITEM_INT(NV_ENCODER_COUNT,		0),
-		MAKE_NV_ITEM_INT(NV_MOTO_TIMER_COUNT, 	382),
+		MAKE_NV_ITEM_INT(NV_ENCODER_COUNT,		100),
+		MAKE_NV_ITEM_INT(NV_MOTO_TIMER_FREQ, 	37500),
 #endif
 		MAKE_NV_ITEM_ARRAY(PB_DEFAULT_KEY, press_back_default_value, sizeof(press_back_default_value)/sizeof(press_back_default_value[0])),
 		MAKE_NV_ITEM_ARRAY(Q_DEFAULT_KEY, q_default_value, sizeof(q_default_value)/sizeof(q_default_value[0])),
@@ -146,7 +149,7 @@ int init_nvitems(void)
 
 	nv_ver = nvitem_get_int(NV_VERSION);
 	LOGD("old nv version %d , new nv version %d \r\n", nv_ver, NVVERSION);
-	if(nv_ver < NVVERSION) {
+	if(nv_ver != NVVERSION) {
 		nvitem_set_default();
 		//nvitem_print();
 	}
@@ -210,4 +213,28 @@ BootMode device_get_bootmode(void)
 void device_set_bootmode(BootMode mode)
 {
 	nvitem_set_int(BOOT_MODE, mode);
+}
+
+void update_angle_data(uint8_t index, char *str, uint16_t size)
+{
+	string_to_array(angle_default_value+index*ANGLE_NUM_QUARTER, str, ANGLE_NUM_QUARTER);
+}
+
+void update_flow_data(char *str, uint16_t size)
+{
+	string_to_array(q_default_value, str, Q_DEFAULT_NUM);
+}
+
+void update_sample_freq(SampleFreq freq)
+{
+	if(CHECK_FREQ(freq)) {
+		sample_freq = freq;
+	}
+}
+
+void update_update_freq(UpdateFreq freq)
+{
+	if(CHECK_FREQ(freq)) {
+		update_freq = freq;
+	}
 }

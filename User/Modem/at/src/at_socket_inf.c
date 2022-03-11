@@ -478,6 +478,15 @@ int at_mqtt_publish(const char *topic, const void *buff, uint16_t length)
 	return at_op->mqtt_publish(topic, buff, length);
 }
 
+int at_mqtt_subscribe(const char *topic, mqtt_evt_handle_t handle)
+{
+	at_device_op_t *at_op = _at_device_op_get();
+	POINTER_SANITY_CHECK(at_op, QCLOUD_ERR_INVAL);
+	POINTER_SANITY_CHECK(at_op->mqtt_subscribe, QCLOUD_ERR_INVAL);
+
+	return at_op->mqtt_subscribe(topic, handle);
+}
+
 int at_mqtt_disconnect(void)
 {
 	at_device_op_t *at_op = _at_device_op_get();

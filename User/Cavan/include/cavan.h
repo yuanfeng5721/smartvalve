@@ -22,7 +22,7 @@
 #define MQTT_PASS		"WIZpdLCOQv1cWYCbrKmwYzM5XeJ6ewZ9Ly0M7lrQLgs="
 
 #define CAVAN_ENDS_WITH(text, len, suffix) \
-	cavan_text_ends_with((text), (len), (suffix), sizeof(suffix) - 1)
+	cavan_text_ends_with((text), (len), (suffix), strlen(suffix))
 
 #define CAVAN_STARTS_WITH(text, prefix) \
 	cavan_text_starts_with(text, prefix)

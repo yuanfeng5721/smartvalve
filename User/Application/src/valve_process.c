@@ -15,10 +15,11 @@
 #include "iot_event.h"
 #include "mqtt.h"
 #include "at_device.h"
-#include "data_process.h"
+#include "valve_process.h"
 #include "sensors_task.h"
 #include "device_nv.h"
 #include "rtc_wakeup.h"
+#include "moto.h"
 
 #define DATA_PROCESS_TASK_PRIORITY      (osPriorityNormal+1)
 #define IS_UPDATE_SENSOR_DATA(sample_count, sample_freq, update_freq) (((sample_count+1)%(update_freq/sample_freq)) == 0)
@@ -49,15 +50,10 @@ dp_t dp_data[DP_MAX_NUMBER] = {
 		{.name = "overflow",}
 };
 
-#define D_CLIENT_ID "TEST001"
-#define D_USERNAME  "448403"
-#define D_PASSWD    "WIZpdLCOQv1cWYCbrKmwYzM5XeJ6ewZ9Ly0M7lrQLgs="
 
-static char clientid[20];
-static char username[20];
-static char passwd[50];
-static UpdateFreq update_freq = 5;
-static SampleFreq sample_freq = 5;
+extern UpdateFreq update_freq;
+extern SampleFreq sample_freq;
+
 static cavan_json_t report_json;
 static uint32_t msg_id = 0;
 
@@ -87,20 +83,7 @@ static uint32_t msg_id = 0;
 //        ]
 //    }
 //}
-void init_mqtt_account(void)
-{
-	memset(clientid, 0, sizeof(clientid));
-	memset(username, 0, sizeof(username));
-	memset(passwd, 0, sizeof(passwd));
 
-	strcpy(clientid, nvitem_get_string(NV_CLIENT_ID));
-	strcpy(username, nvitem_get_string(NV_USERNAME));
-	strcpy(passwd, nvitem_get_string(NV_PASSWORD));
-
-	LOGD("client id: %s\r\n", clientid);
-	LOGD("user name: %s\r\n", username);
-	LOGD("pass word: %s\r\n", passwd);
-}
 
 void init_device_params(void)
 {
@@ -135,7 +118,7 @@ void sensor_data_clear_all(void)
 	}
 	//}
 }
-cavan_json_t *make_report_json(void)
+cavan_json_t *make_dp_report_json(void)
 {
 	uint8_t i = 0, j = 0;
 	uint8_t need_dot = 0;
@@ -145,7 +128,7 @@ cavan_json_t *make_report_json(void)
 	cavan_json_init(json);
 
 	cavan_json_begin(json);
-	cavan_json_printf(json, "\"id\":%d", msg_id);
+	cavan_json_printf(json, "\"id\":%d", msg_id++);
 
 	cavan_json_append_name(json, "dp");
 	cavan_json_begin(json);
@@ -262,6 +245,7 @@ int valve_control(uint16_t sample_count, SampleFreq sample_freq)
 		LOGD("%s:angle = %f\r\n", __FUNCTION__, angle);
 		//return moto_ctrl_for_angle(angle);
 		//need control moto for angle
+		//return moto_ctrl_for_angle(moto_get_freq(), angle);
 		return true;
 	}else{
 		LOGD("%s:nothing to do\r\n", __FUNCTION__);
@@ -270,26 +254,26 @@ int valve_control(uint16_t sample_count, SampleFreq sample_freq)
 	return 0;
 }
 
-void run_process(void)
-{
-//	char *clientid = "TEST001";
-//	char *username = "448403";
-//	char *passwd = "WIZpdLCOQv1cWYCbrKmwYzM5XeJ6ewZ9Ly0M7lrQLgs=";
-	cavan_json_t *report_json = NULL;
-
-	if(!modem_init()) {
-		//send data to mqtt server
-		if(!mqtt_connect(clientid, username, passwd)) {
-			msg_id++;
-			report_json = make_report_json();
-			mqtt_publish("dp/post/json", report_json->buff, strlen(report_json->buff));
-			mqtt_disconnect();
-		}
-	}
-
-	//close modem
-	modem_deinit();
-}
+//void run_process(void)
+//{
+////	char *clientid = "TEST001";
+////	char *username = "448403";
+////	char *passwd = "WIZpdLCOQv1cWYCbrKmwYzM5XeJ6ewZ9Ly0M7lrQLgs=";
+//	cavan_json_t *report_json = NULL;
+//
+//	if(!modem_init()) {
+//		//send data to mqtt server
+//		if(!mqtt_connect(clientid, username, passwd)) {
+//			msg_id++;
+//			report_json = make_report_json();
+//			mqtt_publish("dp/post/json", report_json->buff, strlen(report_json->buff));
+//			mqtt_disconnect();
+//		}
+//	}
+//
+//	//close modem
+//	modem_deinit();
+//}
 
 void DataProcessTask(void const * argument)
 {
@@ -311,11 +295,14 @@ void DataProcessTask(void const * argument)
 	// init sensors parama
 	Sensors_param_init();
 
-	//init mqtt account
-	init_mqtt_account();
+	//init onenet account
+	init_onenet_account();
 
 	//init device params
 	init_device_params();
+
+	//init motor params
+	moto_init();
 
 	// check boot mode
 	bootmode = device_get_bootmode();
@@ -362,7 +349,7 @@ void DataProcessTask(void const * argument)
 				//check whether update sensor data
 				if(IS_UPDATE_SENSOR_DATA(sample_count, sample_freq, update_freq)) {
 					LOGI("sensor sample ok, next task run\r\n");
-					run_process();
+					onenet_process();
 				}
 			}
 			osDelay(100);

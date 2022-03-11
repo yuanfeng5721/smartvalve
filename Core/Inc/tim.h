@@ -29,6 +29,18 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#define TIME_CLOCK_FREQ  32000000
+
+#define MOTO_MAX_FREQ 39000
+#define MOTO_MIN_FREQ 37000
+
+#define MOTO_MAX_FREQ2 42000
+#define MOTO_MIN_FREQ2 44000
+
+#define MOTO_FREQ_STEP 500
+
+#define CHECK_FREQ(f) (f<MOTO_MIN_FREQ)?MOTO_MIN_FREQ:((f>MOTO_MAX_FREQ)?MOTO_MAX_FREQ:f)
+#define CALC_PERIOD(freq) ((TIME_CLOCK_FREQ>>1)/CHECK_FREQ(freq)-2)
 
 /* USER CODE END Includes */
 
@@ -49,7 +61,15 @@ void MX_TIM7_Init(void);
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN Prototypes */
+void freqset(u16 freq);
+void MX_TIM3_MOTO_Init(uint32_t freq , bool direct);
+void MX_TIM3_Stop(void);
+void MX_TIM3_Start(void);
 
+void MX_Encoder_Start(void);
+void MX_Encoder_Stop(void);
+void MX_Encoder_Set_Count(uint16_t count);
+uint16_t MX_Encoder_Get_Count(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

@@ -21,4 +21,5 @@ void ble_wakeup_pin(bool onoff);
 void Delay_MS(uint16_t ms);
 void Delay_S(uint16_t s);
 void System_Reset(void);
+uint32_t get_ticks(void);
 #endif

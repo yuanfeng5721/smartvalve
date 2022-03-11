@@ -250,6 +250,9 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* TIM2 interrupt Init */
+    HAL_NVIC_SetPriority(TIM2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
   /* USER CODE END TIM2_MspInit 1 */
@@ -355,6 +358,8 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3);
 
+    /* TIM2 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
@@ -409,5 +414,208 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 
 /* USER CODE BEGIN 1 */
+static void MX_TIM3_Clear_OCREF(void)
+{
+	htim3.Instance->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1PE |TIM_CCMR1_OC1CE) | (TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE |TIM_CCMR1_OC2CE); /* (4) */
+	htim3.Instance->CCMR2 |= (TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3PE |TIM_CCMR2_OC3CE) | (TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4PE |TIM_CCMR2_OC4CE); /* (4) */
+	htim3.Instance->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E; /* (5) */
+	htim3.Instance->SMCR |= (1<<3); /* (6) */
+	htim3.Instance->CR1 |= TIM_CR1_CEN; /* (7) */
+	htim3.Instance->EGR |= TIM_EGR_UG; /* (8) */
+	//__HAL_TIM_DISABLE(&htim3);
+}
 
+static void MX_TIM3_DeInit(void)
+{
+  if (HAL_TIM_OC_DeInit(&htim3) != HAL_OK)
+  {
+	Error_Handler();
+  }
+
+  if (HAL_TIM_Base_DeInit(&htim3) != HAL_OK)
+  {
+	Error_Handler();
+  }
+}
+
+void MX_TIM3_Start(void)
+{
+  htim3.Instance->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
+
+  htim3.Instance->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
+	/* Enable the Peripheral */
+  __HAL_TIM_ENABLE(&htim3);
+}
+
+void MX_TIM3_Stop(void)
+{
+  MX_TIM3_Clear_OCREF();
+
+	 /* Stop channel 1 in Output compare mode */
+  if(HAL_TIM_OC_Stop(&htim3, TIM_CHANNEL_1) != HAL_OK)
+  {
+    /* Stoped Error */
+    Error_Handler();
+  }
+  /* Stop channel 2 in Output compare mode */
+  if(HAL_TIM_OC_Stop(&htim3, TIM_CHANNEL_2) != HAL_OK)
+  {
+    /* Stoped Error */
+    Error_Handler();
+  }
+  /* Stop channel 3 in Output compare mode */
+  if(HAL_TIM_OC_Stop(&htim3, TIM_CHANNEL_3) != HAL_OK)
+  {
+    /* Stoped Error */
+    Error_Handler();
+  }
+  /* Stop channel 4 in Output compare mode */
+  if(HAL_TIM_OC_Stop(&htim3, TIM_CHANNEL_4) != HAL_OK)
+  {
+    /* Stoped Error */
+    Error_Handler();
+  }
+
+
+//  htim3.Instance->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
+//  TIM_CHANNEL_STATE_SET(&htim3, TIM_CHANNEL_1, HAL_TIM_CHANNEL_STATE_READY);
+//  TIM_CHANNEL_STATE_SET(&htim3, TIM_CHANNEL_2, HAL_TIM_CHANNEL_STATE_READY);
+//  TIM_CHANNEL_STATE_SET(&htim3, TIM_CHANNEL_3, HAL_TIM_CHANNEL_STATE_READY);
+//  TIM_CHANNEL_STATE_SET(&htim3, TIM_CHANNEL_4, HAL_TIM_CHANNEL_STATE_READY);
+  __HAL_TIM_DISABLE(&htim3);
+
+  MX_TIM3_DeInit();
+}
+
+uint16_t calc_period(uint16_t freq)
+{
+	float count = TIME_CLOCK_FREQ/2.0;
+	count = count/freq-2;
+	return (uint16_t)count;
+}
+
+void freqset(u16 freq)
+{
+	uint16_t Period = calc_period(freq);
+
+	TIM3->ARR = Period;
+	TIM2->CCR3 =  Period/2;
+	TIM2->CCR4 =  Period/2;
+}
+
+void MX_TIM3_MOTO_Init(uint32_t freq , bool direct)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+  uint16_t Period = calc_period(freq);
+  uint8_t  OCPolarity[4];
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = Period;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_DISABLE;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_ENABLE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if(direct) //turn forward
+  {
+	  OCPolarity[0] = TIM_OCPOLARITY_HIGH;
+	  OCPolarity[1] = TIM_OCPOLARITY_LOW;
+	  OCPolarity[2] = TIM_OCPOLARITY_HIGH;
+	  OCPolarity[3] = TIM_OCPOLARITY_LOW;
+  }
+  else //turn backward
+  {
+	  OCPolarity[0] = TIM_OCPOLARITY_HIGH;
+	  OCPolarity[1] = TIM_OCPOLARITY_LOW;
+	  OCPolarity[2] = TIM_OCPOLARITY_LOW;
+	  OCPolarity[3] = TIM_OCPOLARITY_HIGH;
+  }
+  //channel1 config
+  sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = OCPolarity[0];//TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  //channel2 config
+  sConfigOC.OCPolarity = OCPolarity[1];//TIM_OCPOLARITY_LOW;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  //channel3 config
+  sConfigOC.Pulse = Period>>1;
+  sConfigOC.OCPolarity = OCPolarity[2];//TIM_OCPOLARITY_HIGH;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  //channel4 config
+  sConfigOC.OCPolarity = OCPolarity[3];//TIM_OCPOLARITY_LOW;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+}
+
+void MX_Encoder_Start(void)
+{
+	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
+}
+
+void MX_Encoder_Stop(void)
+{
+	HAL_TIM_Encoder_Stop(&htim2,TIM_CHANNEL_ALL);
+}
+
+void MX_Encoder_Set_Count(uint16_t count)
+{
+	__HAL_TIM_SET_COUNTER(&htim2,count);
+}
+
+uint16_t MX_Encoder_Get_Count(void)
+{
+	return __HAL_TIM_GET_COUNTER(&htim2);
+}
 /* USER CODE END 1 */

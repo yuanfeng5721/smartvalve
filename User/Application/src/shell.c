@@ -18,6 +18,7 @@
 #include "cmsis_os.h"
 #include "utils_timer.h"
 #include "utils_ringbuff.h"
+#include "moto.h"
 
 #define SHELL_UART_RECV_IRQ
 #define SHELL_RING_BUFF_SIZE   512
@@ -61,8 +62,8 @@ bool set_angle_cmd(char *args[], uint8_t argc, uint16_t len );
 bool get_angle_cmd(char *args[], uint8_t argc, uint16_t len );
 bool set_encoder_count_cmd(char *args[], uint8_t argc, uint16_t len );
 bool get_encoder_count_cmd(char *args[], uint8_t argc, uint16_t len );
-bool set_moto_timer_count_cmd(char *args[], uint8_t argc, uint16_t len );
-bool get_moto_timer_count_cmd(char *args[], uint8_t argc, uint16_t len );
+bool set_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len );
+bool get_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len );
 bool erase_nv_cmd(char *args[], uint8_t argc, uint16_t len );
 
 static const cli_cmd g_cmd[]=
@@ -70,7 +71,7 @@ static const cli_cmd g_cmd[]=
 	{"set_mode",1,"set device mode", set_mode_cmd, NULL},
 	{"nv_wr",2,"write nv item", nv_write_cmd, NULL},
 	{"nv_rd",1,"read nv item", nv_read_cmd, NULL},
-	{"moto_ctl",2,"control moto", moto_control_cmd, NULL},
+//	{"moto_ctl",2,"control moto", moto_control_cmd, NULL},
 	{"read_sensor",1,"read sensor value", read_sendor_cmd, NULL},
 //	{"set_network",1,"set network mode", set_network_cmd, NULL},
 //	{"get_network",0,"get network mode", get_network_cmd, NULL},
@@ -92,11 +93,11 @@ static const cli_cmd g_cmd[]=
 	{"get_a_d",0,"get opening value", get_angle_cmd, NULL},
 //	{"set_encoder_count",1,"set encoder count", set_encoder_count_cmd, NULL},
 //	{"get_encoder_count",0,"get encoder count", get_encoder_count_cmd, NULL},
-//	{"set_moto_timer_count",1,"set moto timer count", set_moto_timer_count_cmd, NULL},
-//	{"get_moto_timer_count",0,"get moto timer count", get_moto_timer_count_cmd, NULL},
+	{"set_moto_freq",1,"set moto timer freq", set_moto_timer_freq_cmd, NULL},
+	{"get_moto_freq",0,"get moto timer freq", get_moto_timer_freq_cmd, NULL},
 //	{"reset_bootcount_cmd",0,"reset bootcount", reset_bootcount_cmd, NULL},
-//	{"encoder_test",1,"encoder test", encoder_test_cmd, NULL},
-	{"set_valve_angle",1,"set valve angel",set_valve_angle_cmd, NULL },
+	{"moto_encoder_test",3,"moto encoder test", encoder_test_cmd, NULL},
+	{"set_valve_angle",2,"set valve angel",set_valve_angle_cmd, NULL },
 	{"erase_nv",0,"erase nv items",erase_nv_cmd, NULL },
 //	{"help",0,"this is help", help_cmd, NULL},
 //	{"sync",1,"pc connect device", sync_cmd, NULL}
@@ -212,32 +213,26 @@ bool help_cmd(char *args[], uint8_t argc, uint16_t len )
 	return true;
 }
 
-bool moto_control_cmd(char *args[], uint8_t argc, uint16_t len)
+bool set_valve_angle_cmd(char *args[], uint8_t argc, uint16_t len)
 {
 	char driect = 'f';
-	uint32_t circleNumber = 0;
+	uint32_t angle = 0;
+	uint32_t freq = 39000;
 
 	shell_print("%s: %d\r\n",__FUNCTION__, argc);
 
-	driect = args[0][0];
-	circleNumber = atoi(args[1]);
+	angle = atoi(args[0]);
+	freq = atoi(args[1]);
 
-	shell_print("driect: %c, circlenumber: %d\r\n",driect, circleNumber);
+	shell_print("angle: %d, freq: %d\r\n", angle, freq);
 
-	if(circleNumber<=0 || circleNumber>150)
+	if(angle<=0 || angle>99)
 	{
-		shell_print("circlenumber is error!!!\r\n");
+		shell_print("angle is error!!!\r\n");
 		return false;
 	}
 
-#if 0
-	if(driect == 'f')
-		//moto_turn_number(DRIVER_FREQ, TURN_FORWARD, circleNumber);
-		moto_encoder_set_angle(circleNumber, 1);
-	else
-		//moto_turn_number(DRIVER_FREQ, TURN_BACK, circleNumber);
-		moto_encoder_set_angle(circleNumber, -1);
-#endif
+	moto_ctrl_for_angle(freq, angle);
 
 	shell_print("\r\nok\r\n");
 	return true;
@@ -461,27 +456,6 @@ bool get_q_d_cmd(char *args[], uint8_t argc, uint16_t len)
 	return true;
 }
 
-bool set_valve_angle_cmd(char *args[], uint8_t argc, uint16_t len)
-{
-	char *value = NULL;
-	uint8_t angle = 0;
-
-	value = args[0];
-
-	shell_print("%s: value=%s\r\n",__FUNCTION__, value);
-
-	if(value == NULL)
-		shell_print("\r\nfaile\r\n");
-	else
-	{
-		angle = atoi(value);
-		//moto_ctrl_for_angle(angle);
-		shell_print("\r\nok\r\n");
-	}
-
-	return true;
-}
-
 bool set_angle_cmd(char *args[], uint8_t argc, uint16_t len )
 {
 	char *value = NULL;
@@ -524,6 +498,71 @@ bool get_angle_cmd(char *args[], uint8_t argc, uint16_t len )
 	value = nvitem_get_string(ANGLE_DEFAULT_KEY);
 	shell_print("%s\r\n", value);
 	shell_print("\r\nok\r\n");
+	return true;
+}
+
+bool encoder_test_cmd(char *args[], uint8_t argc, uint16_t len)
+{
+	char *value = NULL;
+	uint16_t freq = 0;
+	int number = 0;
+	bool dir = true;
+
+	value = args[0];
+
+	shell_print("%s: freq=%s, number=%s, dir=%s\r\n",__FUNCTION__, args[0],args[1],args[2]);
+
+	if(args[0] == NULL || args[1] == NULL || args[2] == NULL)
+		shell_print("\r\nfaile\r\n");
+	else
+	{
+		freq = atoi(args[0]);
+		number = atoi(args[1]);
+		dir = atoi(args[2]);
+
+		moto_encoder_test(freq, number, dir);
+		shell_print("\r\nok\r\n");
+	}
+
+	return true;
+}
+
+bool set_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len )
+{
+	char *key = NULL, *value = NULL;
+	uint16_t m_freq = 0;
+
+	value = args[0];
+
+	shell_print("%s: value=%s\r\n",__FUNCTION__, value);
+
+	if(value == NULL)
+		shell_print("\r\nfaile\r\n");
+	else
+	{
+		m_freq = atoi(value);
+		if((m_freq>=MOTO_MIN_FREQ && m_freq<=MOTO_MAX_FREQ) || (m_freq>=MOTO_MIN_FREQ2 && m_freq<=MOTO_MAX_FREQ2))
+		{
+			shell_print("\r\nfreq:%d\r\n",m_freq);
+			nvitem_set_int(NV_MOTO_TIMER_FREQ, m_freq);
+			shell_print("\r\nok\r\n");
+		}
+		else
+			shell_print("\r\nfaile\r\n");
+	}
+
+	return true;
+}
+
+bool get_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len )
+{
+	uint32_t value = 0, freq;
+
+	shell_print("%s\r\n",__FUNCTION__);
+	{
+		freq = nvitem_get_int(NV_MOTO_TIMER_FREQ);
+		shell_print("\r\n%d\r\n\r\nok\r\n",freq);
+	}
 	return true;
 }
 

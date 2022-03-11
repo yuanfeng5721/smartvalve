@@ -27,6 +27,7 @@ typedef enum
     IO_MSG_TYPE_TIMER,           /**< App timer message with subtype @ref T_IO_MSG_TIMER */
     IO_MSG_TYPE_RESET_WDG_TIMER, /**< reset watch dog timer*/
 	IO_MSG_TYPE_READ_SENSOR,
+	IO_MSG_TYPE_MQTT_PUBLISH,
 } io_msg_type_t;
 
 osMsgStatus os_msg_create(os_msg_handle *pp_handle, uint16_t msg_num, uint16_t msg_size);

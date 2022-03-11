@@ -53,6 +53,13 @@ static at_evt_cb_t at_evt_cb_table[] = {
     [AT_SOCKET_EVT_CLOSED] = NULL,
 };
 
+static mqtt_sub_ctx_t mqtt_sub_ctx[4] = {
+	{{0}, NULL},
+	{{0}, NULL},
+	{{0}, NULL},
+	{{0}, NULL}
+};
+
 static char g_IMEI[IMEI_MAX_LEN] = {0};
 static int ml302_rssi;
 static int ml302_ber;
@@ -402,10 +409,10 @@ static bool process_property_desired_reply(const char *buff, u16 length)
 
 static bool process_mqtt_publish(char *argv[], int argc)
 {
-	static char line1[1024];
+	static char line1[4096];
 	static char line0[64];
-	const char *name;
-	int len0, len1;
+	//const char *name;
+	int len0, len1, i;
 
 	len0 = cavan_mqtt_readline(line0, sizeof(line0));
 	if (len0 < 0) {
@@ -417,22 +424,30 @@ static bool process_mqtt_publish(char *argv[], int argc)
 		return false;
 	}
 
-	if (CAVAN_ENDS_WITH(line0, len0, "/set")) {
-		return process_property_set(line1, len1);
-	}
+//	if (CAVAN_ENDS_WITH(line0, len0, "/set")) {
+//		return process_property_set(line1, len1);
+//	}
+//
+//	if (CAVAN_ENDS_WITH(line0, len0, "/get")) {
+//		return process_property_get(line1, len1);
+//	}
+//
+//	if (CAVAN_ENDS_WITH(line0, len0, "/post/reply")) {
+//		return process_property_post_reply(line1, len1);
+//	}
+//
+//	if (CAVAN_ENDS_WITH(line0, len0, "/desired/get/reply")) {
+//		return process_property_desired_reply(line1, len1);
+//	}
 
-	if (CAVAN_ENDS_WITH(line0, len0, "/get")) {
-		return process_property_get(line1, len1);
+	for(i=0; i<NELEM(mqtt_sub_ctx); i++) {
+		if(CAVAN_ENDS_WITH(line0, len0, mqtt_sub_ctx[i].topic)) {
+			if(mqtt_sub_ctx[i].handle != NULL) {
+				mqtt_sub_ctx[i].handle(line1, len1);
+				return true;
+			}
+		}
 	}
-
-	if (CAVAN_ENDS_WITH(line0, len0, "/post/reply")) {
-		return process_property_post_reply(line1, len1);
-	}
-
-	if (CAVAN_ENDS_WITH(line0, len0, "/desired/get/reply")) {
-		return process_property_desired_reply(line1, len1);
-	}
-
 	return false;
 }
 
@@ -1599,6 +1614,73 @@ exit:
 	return ret;
 }
 
+static int mqtt_sub_handle_reg(const char *topic, mqtt_evt_handle_t handle)
+{
+	for(int i=0; i<NELEM(mqtt_sub_ctx); i++)
+	{
+		if(mqtt_sub_ctx[i].handle == NULL)
+		{
+			mqtt_sub_ctx[i].handle = handle;
+			snprintf(mqtt_sub_ctx[i].topic, sizeof(mqtt_sub_ctx[i].topic), "%s", topic);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static int mqtt_sub_handle_unreg(const char *topic)
+{
+	for(int i=0; i<NELEM(mqtt_sub_ctx); i++)
+	{
+		if(strcmp(mqtt_sub_ctx[i].topic, topic) == 0)
+		{
+			mqtt_sub_ctx[i].handle = NULL;
+			memset(mqtt_sub_ctx[i].topic, 0, sizeof(mqtt_sub_ctx[i].topic));
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static void mqtt_sub_handle_clear(void)
+{
+	for(int i=0; i<NELEM(mqtt_sub_ctx); i++)
+	{
+		mqtt_sub_ctx[i].handle = NULL;
+		memset(mqtt_sub_ctx[i].topic, 0, sizeof(mqtt_sub_ctx[i].topic));
+	}
+}
+static int ml302_mqtt_sub(const char *topic, mqtt_evt_handle_t handle)
+{
+	at_response_t resp = NULL;
+	int           ret;
+	uint8_t 	  times = 3;
+
+	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
+	if (NULL == resp) {
+		Log_e("No memory for response structure!");
+		ret = QCLOUD_ERR_FAILURE;
+		goto exit;
+	}
+
+	at_clearFlag(MQTT_OK_FLAG | MQTT_FAIL_FLAG);
+	at_exec_cmd(resp, "AT+MMQTTSUB=0,\"$sys/%s/%s/%s\"", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic);
+
+	if(cavan_wait_conn_complete(AT_RESP_TIMEOUT_MS)) {
+		ret = QCLOUD_RET_SUCCESS;
+		mqtt_sub_handle_reg(topic, handle);
+	} else {
+		ret = QCLOUD_ERR_MQTT_SUB_FAIL;
+	}
+
+	if (resp) {
+		at_delete_resp(resp);
+	}
+
+	exit:
+		return ret;
+}
+
 static int ml302_mqtt_pub(const char *topic, const void *buff, u16 length)
 {
 	at_response_t resp = NULL;
@@ -1667,6 +1749,7 @@ static int ml302_mqtt_disconnect(void)
 		at_delete_resp(resp);
 	}
 
+	mqtt_sub_handle_clear();
 exit:
 	return ret;
 }
@@ -1685,6 +1768,7 @@ at_device_op_t at_ops_ml302 = {
     .set_event_cb    = ml302_set_event_cb,
 	.mqtt_connect    = ml302_mqtt_connect,
 	.mqtt_publish    = ml302_mqtt_pub,
+	.mqtt_subscribe  = ml302_mqtt_sub,
 	.mqtt_disconnect = ml302_mqtt_disconnect,
     .deviceName   = "ml302",
 };

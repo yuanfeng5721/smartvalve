@@ -23,7 +23,7 @@
 #ifndef cJSON__h
 #define cJSON__h
 
-#ifdef EF_USING_S2J
+//#ifdef EF_USING_S2J
 
 #include <stddef.h>
 
@@ -153,6 +153,6 @@ extern void cJSON_Minify(char *json);
 }
 #endif
 
-#endif //EF_USING_S2J
+//#endif //EF_USING_S2J
 
 #endif

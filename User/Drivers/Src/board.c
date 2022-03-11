@@ -105,3 +105,8 @@ void System_Reset(void)
 {
 	NVIC_SystemReset();
 }
+
+uint32_t get_ticks(void)
+{
+	return osKernelSysTick();
+}

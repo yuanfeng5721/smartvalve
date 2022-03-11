@@ -70,6 +70,7 @@ int socket_parse_domain(const char *domain, sockaddr_t *addr);
 /*mqtt api*/
 int mqtt_connect(const char *clientid, const char *username, const char *passwd);
 int mqtt_publish(const char *topic, const void *buff, uint16_t length);
+int mqtt_subscribe(const char *topic, mqtt_evt_handle_t handle);
 int mqtt_disconnect(void);
 
 #ifdef __cplusplus

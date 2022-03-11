@@ -282,6 +282,22 @@ int mqtt_publish(const char *topic, const void *buff, uint16_t length)
 	return ret;
 }
 
+int mqtt_subscribe(const char *topic, mqtt_evt_handle_t handle)
+{
+	STRING_PTR_SANITY_CHECK_RTN(topic);
+	POINTER_SANITY_CHECK(handle, QCLOUD_ERR_INVAL);
+
+	int ret = at_mqtt_subscribe(topic, handle);
+
+	if (ret < 0) {
+		Log_e("fail to subscribe topic: (%s)!!!", topic);
+	} else {
+		Log_d("subscribe topic success!!!");
+	}
+
+	return ret;
+}
+
 int mqtt_disconnect(void)
 {
 	int ret = at_mqtt_disconnect();

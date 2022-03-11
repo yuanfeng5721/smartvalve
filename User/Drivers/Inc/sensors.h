@@ -47,4 +47,5 @@ typedef struct sensors_sample_t{
 sensors_sample_t* Sensors_Sample_Data(void);
 void Sensors_Power(bool onoff);
 void Sensors_param_init(void);
+float Sensors_Angle_Get(void);
 #endif /* DRIVERS_INC_SENSORS_H_ */

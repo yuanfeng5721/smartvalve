@@ -67,6 +67,7 @@ void MX_FREERTOS_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void fault_test_by_div0(void);
+extern void test_json(void);
 /* USER CODE END 0 */
 
 /**
@@ -108,7 +109,7 @@ int main(void)
   MX_ADC_Init();
   MX_I2C1_Init();
   MX_RTC_Init();
-  MX_TIM3_Init();
+  //MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
@@ -119,6 +120,9 @@ int main(void)
   print_software_version();
   //fault_test_by_div0();
   //test_nv_def();
+  //MX_TIM3_MOTO_Init(39800, false);
+  //test_json();
+  //while(1);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -142,6 +146,7 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
+//sysclk 32MHz
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};

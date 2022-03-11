@@ -22,7 +22,7 @@
 
 /* cJSON */
 /* JSON parser in C. */
-#ifdef EF_USING_S2J
+//#ifdef EF_USING_S2J
 
 #include <string.h>
 #include <stdio.h>
@@ -761,4 +761,4 @@ void cJSON_Minify(char *json)
 	}
 	*into=0;	/* and null-terminate. */
 }
-#endif //EF_USING_S2J
+//#endif //EF_USING_S2J

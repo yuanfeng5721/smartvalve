@@ -27,6 +27,7 @@
 #define AT_SOCKET_RECV_TIMEOUT_MS (1000)
 #define IPV4_STR_MAX_LEN          (16)
 #define IMEI_MAX_LEN 			  (16)
+#define MQTT_TOPIC_MAX_LEN        (64)
 
 typedef enum { eNET_TCP = 6, eNET_UDP = 17, eNET_MQTT = 18, eNET_MQTTS = 19, eNET_DEFAULT = 0xff } eNetProto;
 
@@ -60,7 +61,7 @@ typedef enum {
 } at_socket_evt_t;
 
 typedef void (*at_evt_cb_t)(int fd, at_socket_evt_t event, char *buff, size_t bfsz);
-
+typedef void (*mqtt_evt_handle_t)(char *buff, size_t bfsz);
 /*at device driver ops, use at_device_op_register register to at socket*/
 typedef struct {
     int (*init)(void);
@@ -79,6 +80,7 @@ typedef struct {
     int (*mqtt_connect)(const char *clientid, const char *username, const char *passwd);
     int (*mqtt_publish)(const char *topic, const void *buff, uint16_t length);
     //int (*mqtt_evnet_handle)();
+    int (*mqtt_subscribe)(const char *topic, mqtt_evt_handle_t handle);
     int (*mqtt_disconnect)(void);
     char *deviceName;
 } at_device_op_t;
@@ -97,6 +99,11 @@ typedef struct {
     eSocketState    state;
 } at_socket_ctx_t;
 
+typedef struct {
+	char topic[MQTT_TOPIC_MAX_LEN];
+	mqtt_evt_handle_t handle;
+} mqtt_sub_ctx_t;
+
 // at socket api
 int at_device_op_register(at_device_op_t *device_op);
 int at_socket_init(void);
@@ -114,5 +121,6 @@ int at_socket_ntp(time_t *t);
 // at mqtt api
 int at_mqtt_connect(const char *clientid, const char *username, const char *passwd);
 int at_mqtt_publish(const char *topic, const void *buff, uint16_t length);
+int at_mqtt_subscribe(const char *topic, mqtt_evt_handle_t handle);
 int at_mqtt_disconnect(void);
 #endif

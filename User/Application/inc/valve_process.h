@@ -27,7 +27,7 @@ typedef struct {
 	d_t dt[STROE_MAX_NUMBER];
 }dp_t;
 
-cavan_json_t *make_report_json(void);
+cavan_json_t *make_dp_report_json(void);
 
 void DataProcessTaskInit(void);
 #endif /* APPLICATION_INC_DATA_PROCESS_H_ */

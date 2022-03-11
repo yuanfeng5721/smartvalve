@@ -40,6 +40,7 @@
 #define NV_B_PRESS_MIN   "press_b_min"
 #define NV_ENCODER_COUNT "encoder_count"
 #define NV_MOTO_TIMER_COUNT "moto_tim_cnt"
+#define NV_MOTO_TIMER_FREQ "moto_tim_freq"
 
 /**********************************************************************
  * 						nv value define
@@ -84,6 +85,8 @@ typedef enum{
 	UPDATE_20MIN 	= 20,
 }UpdateFreq;
 
+#define CHECK_FREQ(f) (!(f != SAMPLE_5MIN && f != SAMPLE_10MIN && f != SAMPLE_20MIN))
+
 #define CHECK_SAMPLE_FREQ(f) ((f != SAMPLE_5MIN && f != SAMPLE_10MIN && f != SAMPLE_20MIN)?SAMPLE_5MIN:f)
 #define CHECK_UPDATE_FREQ(f) ((f != UPDATE_5MIN && f != UPDATE_10MIN && f != UPDATE_20MIN)?UPDATE_20MIN:f)
 
@@ -101,7 +104,7 @@ typedef enum{
 
 #define ANGLE_DEFAULT_KEY "ANGLE_DEFAULT"
 #define ANGLE_DEFAULT_NUM 288
-
+#define ANGLE_NUM_QUARTER  ANGLE_DEFAULT_NUM/4
 
 /***********************************************************************
  * 						extern variable
@@ -122,4 +125,9 @@ bool get_warring_flag(void);
 void set_warring_flag(bool flag);
 BootMode device_get_bootmode(void);
 void device_set_bootmode(BootMode mode);
+
+void update_angle_data(uint8_t index, char *str, uint16_t size);
+void update_flow_data(char *str, uint16_t size);
+void update_sample_freq(SampleFreq freq);
+void update_update_freq(UpdateFreq freq);
 #endif /* APPLICATION_INC_DEVICE_NV_H_ */
