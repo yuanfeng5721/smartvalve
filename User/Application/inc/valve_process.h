@@ -24,8 +24,13 @@ typedef struct {
 
 typedef struct {
 	const char *name;
-	d_t dt[STROE_MAX_NUMBER];
+	d_t dt;
 }dp_t;
+
+typedef struct {
+	const char *name;
+	d_t dt[STROE_MAX_NUMBER];
+}dps_t;
 
 cavan_json_t *make_dp_report_json(void);
 

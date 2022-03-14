@@ -947,7 +947,7 @@ int at_client_init(at_client_t *pClient)
         //  create thread for at parser
         if (NULL != client->parser) {
 #define AT_PARSER_THREAD_STACK    1024
-#define AT_PARSER_THREAD_PRIORITY 1 //osPriorityNormal
+#define AT_PARSER_THREAD_PRIORITY 2 //osPriorityNormal
             //static ThreadParams thread_params = {0};
             thread_params.thread_func  = client->parser;
             thread_params.thread_name  = "at_client_parser";

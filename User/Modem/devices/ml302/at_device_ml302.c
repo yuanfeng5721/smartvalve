@@ -1656,6 +1656,8 @@ static int ml302_mqtt_sub(const char *topic, mqtt_evt_handle_t handle)
 	int           ret;
 	uint8_t 	  times = 3;
 
+	mqtt_sub_handle_clear();
+
 	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
 	if (NULL == resp) {
 		Log_e("No memory for response structure!");
@@ -1667,10 +1669,17 @@ static int ml302_mqtt_sub(const char *topic, mqtt_evt_handle_t handle)
 	at_exec_cmd(resp, "AT+MMQTTSUB=0,\"$sys/%s/%s/%s\"", g_mqtt_clinet.username, g_mqtt_clinet.clientid, topic);
 
 	if(cavan_wait_conn_complete(AT_RESP_TIMEOUT_MS)) {
-		ret = QCLOUD_RET_SUCCESS;
-		mqtt_sub_handle_reg(topic, handle);
+		if(mqtt_sub_handle_reg(topic, handle) == 0) {
+			ret = QCLOUD_RET_SUCCESS;
+			LOGE("%s: sub reg handle success!!!\r\n", __FUNCTION__);
+		} else {
+			ret = QCLOUD_ERR_MQTT_SUB_FAIL;
+			LOGE("%s: sub reg handle error!!!\r\n", __FUNCTION__);
+		}
+
 	} else {
 		ret = QCLOUD_ERR_MQTT_SUB_FAIL;
+		LOGE("%s: sub topic timeout!!!\r\n", __FUNCTION__);
 	}
 
 	if (resp) {

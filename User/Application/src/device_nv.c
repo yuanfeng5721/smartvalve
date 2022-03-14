@@ -217,6 +217,9 @@ void device_set_bootmode(BootMode mode)
 
 void update_angle_data(uint8_t index, char *str, uint16_t size)
 {
+	if(index == 0)
+		memset(angle_default_value, 0, ANGLE_DEFAULT_NUM);
+
 	string_to_array(angle_default_value+index*ANGLE_NUM_QUARTER, str, ANGLE_NUM_QUARTER);
 }
 
@@ -238,3 +241,5 @@ void update_update_freq(UpdateFreq freq)
 		update_freq = freq;
 	}
 }
+
+

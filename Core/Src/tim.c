@@ -78,7 +78,8 @@ void MX_TIM3_Init(void)
 {
 
   /* USER CODE BEGIN TIM3_Init 0 */
-
+  MX_Moto_Gpio_Clear();
+#if 0
   /* USER CODE END TIM3_Init 0 */
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
@@ -149,7 +150,7 @@ void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
-
+#endif
 }
 /* TIM6 init function */
 void MX_TIM6_Init(void)
@@ -485,6 +486,7 @@ void MX_TIM3_Stop(void)
   __HAL_TIM_DISABLE(&htim3);
 
   MX_TIM3_DeInit();
+  MX_Moto_Gpio_Clear();
 }
 
 uint16_t calc_period(uint16_t freq)
@@ -617,5 +619,23 @@ void MX_Encoder_Set_Count(uint16_t count)
 uint16_t MX_Encoder_Get_Count(void)
 {
 	return __HAL_TIM_GET_COUNTER(&htim2);
+}
+
+void MX_Moto_Gpio_Clear(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	 __HAL_RCC_GPIOC_CLK_ENABLE();
+	/**TIM3 GPIO Configuration
+	PC6     ------> TIM3_CH1
+	PC7     ------> TIM3_CH2
+	PC8     ------> TIM3_CH3
+	PC9     ------> TIM3_CH4
+	*/
+	GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 /* USER CODE END 1 */

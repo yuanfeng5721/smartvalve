@@ -26,6 +26,7 @@ char *cavan_mqtt_sign(const char *user, const char *pass, const char *device, ch
 char *cavan_mqtt_token(const char *user, const char *pass, const char *device, char *token, int size);
 
 void cavan_mqtt_append_property(cavan_json_t *json, const char *name, const char *format, ...);
+void cavan_mqtt_append_property2(cavan_json_t *json, const char *name, const char *format, ...);
 
 static inline void cavan_mqtt_append_int(cavan_json_t *json, const char *name, int value)
 {

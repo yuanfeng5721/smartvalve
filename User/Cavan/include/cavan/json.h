@@ -3,7 +3,7 @@
 #include "cavan.h"
 
 typedef struct {
-	char buff[1024];
+	char buff[2048];
 	u16 length;
 } cavan_json_t;
 
