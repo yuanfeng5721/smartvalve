@@ -102,14 +102,14 @@ void init_onenet_account(void)
 //	"metadata":{"sampleIntvl":{"timestamp":1646210722}},
 //	"version":21,"timestamp":1646965516
 //}
-static char *message = "{\"state\":{\"sampParamKaidu4\":\"99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99\",\"sampleIntvl\":5,\"sampParamKaidu2\":\"250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,1312\",\"sampParamFlow\":\"939,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,3312\",\"sampParamKaidu3\":\"20,10,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99\",\"sampParamKaidu1\":\"88887,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250\"},\"metadata\":{\"sampParamKaidu4\":{\"timestamp\":1646981827},\"sampleIntvl\":{\"timestamp\":1646981827},\"sampParamKaidu2\":{\"timestamp\":1646981827},\"sampParamFlow\":{\"timestamp\":1646981827},\"sampParamKaidu3\":{\"timestamp\":1646981827},\"sampParamKaidu1\":{\"timestamp\":1646981827}},\"version\":25,\"timestamp\":1646986817}";
+//static char *message = "{\"state\":{\"sampParamKaidu4\":\"99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99\",\"sampleIntvl\":5,\"sampParamKaidu2\":\"250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,1312\",\"sampParamFlow\":\"939,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,3312\",\"sampParamKaidu3\":\"20,10,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99,99\",\"sampParamKaidu1\":\"88887,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250\"},\"metadata\":{\"sampParamKaidu4\":{\"timestamp\":1646981827},\"sampleIntvl\":{\"timestamp\":1646981827},\"sampParamKaidu2\":{\"timestamp\":1646981827},\"sampParamFlow\":{\"timestamp\":1646981827},\"sampParamKaidu3\":{\"timestamp\":1646981827},\"sampParamKaidu1\":{\"timestamp\":1646981827}},\"version\":25,\"timestamp\":1646986817}";
 static void update_delta_handle(char *msg, size_t size)
 {
 	cJSON *jsRoot = NULL;
 	cJSON *jsItem = NULL;
 	cJSON *jsValue = NULL;
 
-	LOGD("msg: %s \r\n", msg);
+	//LOGD("msg: %s \r\n", msg);
 
 	jsRoot = cJSON_Parse(msg);
 	if(jsRoot != NULL) {
@@ -138,32 +138,35 @@ static void update_delta_handle(char *msg, size_t size)
 			if(jsValue!=NULL || jsValue->type == cJSON_String) {
 				LOGD("sampParamKaidu1: %s \r\n", jsValue->valuestring);
 				update_angle_data(0, jsValue->valuestring, strlen(jsValue->valuestring));
-				need_update_flag |= ANGLE_DEFAULT_FLAG;
+				need_update_flag |= ANGLE_DEFAULT1_FLAG;
 			}
 
 			jsValue = cJSON_GetObjectItem(jsItem, "sampParamKaidu2");
 			if(jsValue!=NULL || jsValue->type == cJSON_String) {
 				LOGD("sampParamKaidu2: %s \r\n", jsValue->valuestring);
 				update_angle_data(1, jsValue->valuestring, strlen(jsValue->valuestring));
+				need_update_flag |= ANGLE_DEFAULT2_FLAG;
 			}
 
 			jsValue = cJSON_GetObjectItem(jsItem, "sampParamKaidu3");
 			if(jsValue!=NULL || jsValue->type == cJSON_String) {
 				LOGD("sampParamKaidu3: %s \r\n", jsValue->valuestring);
 				update_angle_data(2, jsValue->valuestring, strlen(jsValue->valuestring));
+				need_update_flag |= ANGLE_DEFAULT3_FLAG;
 			}
 
 			jsValue = cJSON_GetObjectItem(jsItem, "sampParamKaidu4");
 			if(jsValue!=NULL || jsValue->type == cJSON_String) {
 				LOGD("sampParamKaidu4: %s \r\n", jsValue->valuestring);
 				update_angle_data(3, jsValue->valuestring, strlen(jsValue->valuestring));
+				need_update_flag |= ANGLE_DEFAULT4_FLAG;
 			}
 		}
 	}
 	cJSON_Delete(jsRoot);
 
-	//os_event_set(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE);
-	recv_flag = true;
+	os_event_set(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE);
+	//recv_flag = true;
 }
 
 static cavan_json_t *make_image_dp_json(void)
@@ -225,12 +228,13 @@ static int onenet_publish_last_dp(void)
 		LOGE("onenet publish %s fail!! \r\n", json->buff);
 		return -1;
 	}
+	return 0;
 }
 
 static int onenet_trigger_delta(void)
 {
 	char message[64] = {0};
-	cavan_json_t *json = NULL;
+//	cavan_json_t *json = NULL;
 	need_update_flag = 0;
 
 	LOGI("%s \r\n", __FUNCTION__);
@@ -260,6 +264,7 @@ char temp[512];
 static cavan_json_t *make_image_json(void)
 {
 	cavan_json_t *json = &report_json;
+	uint32_t *ptr = angle_default_value;
 //	bool need_dot = false;
 
 	LOGI("%s \r\n", __FUNCTION__);
@@ -289,22 +294,27 @@ static cavan_json_t *make_image_json(void)
 		array_to_string(temp, q_default_value, Q_DEFAULT_NUM);
 		cavan_mqtt_append_text2(json, "sampParamFlow", temp);
 	}
-	if(need_update_flag & ANGLE_DEFAULT_FLAG) {
-		uint32_t *ptr = angle_default_value;
+	if(need_update_flag & ANGLE_DEFAULT1_FLAG) {
 //		if(need_dot){
 //			cavan_json_append(json, ',');
 //		}
 		memset(temp, 0, sizeof(temp));
 		array_to_string(temp, ptr, ANGLE_NUM_QUARTER);
 		cavan_mqtt_append_text2(json, "sampParamKaidu1", temp);
+	}
+	if(need_update_flag & ANGLE_DEFAULT2_FLAG) {
 		//cavan_json_append(json, ',');
 		memset(temp, 0, sizeof(temp));
 		array_to_string(temp, ptr+ANGLE_NUM_QUARTER, ANGLE_NUM_QUARTER);
 		cavan_mqtt_append_text2(json, "sampParamKaidu2", temp);
+	}
+	if(need_update_flag & ANGLE_DEFAULT3_FLAG) {
 		//cavan_json_append(json, ',');
 		memset(temp, 0, sizeof(temp));
 		array_to_string(temp, ptr+ANGLE_NUM_QUARTER*2, ANGLE_NUM_QUARTER);
 		cavan_mqtt_append_text2(json, "sampParamKaidu3", temp);
+	}
+	if(need_update_flag & ANGLE_DEFAULT4_FLAG) {
 		//cavan_json_append(json, ',');
 		memset(temp, 0, sizeof(temp));
 		array_to_string(temp, ptr+ANGLE_NUM_QUARTER*3, ANGLE_NUM_QUARTER);
@@ -321,26 +331,27 @@ static cavan_json_t *make_image_json(void)
 int onenet_publish_device_image(void)
 {
 	cavan_json_t *report_json = NULL;
-	uint32_t old_time,new_time;
+//	uint32_t old_time,new_time;
 
 	LOGI("%s \r\n", __FUNCTION__);
 
-	old_time = new_time = get_ticks();
+//	old_time = new_time = get_ticks();
 
-	//if(os_event_wait(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE, osFlagsWaitAll, S_TO_TICKS(60)) != IO_EVT_TYPE_MQTT_RECV_COMPLETE)
-	while(!recv_flag)
-	{
-		if((new_time-old_time) > 15*1000)
-		{
-			LOGE("mqtt recv timeout\r\n");
-			break;
-		}
-		osDelay(100);
-		new_time = get_ticks();
-	}
-
-	if(recv_flag)
-	{
+//	while(!recv_flag)
+//	{
+//		if((new_time-old_time) > 15*1000)
+//		{
+//			LOGE("mqtt recv timeout\r\n");
+//			break;
+//		}
+//		osDelay(100);
+//		new_time = get_ticks();
+//	}
+//
+//	if(recv_flag)
+	if(os_event_wait(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE, osFlagsWaitAll, S_TO_TICKS(10)) != IO_EVT_TYPE_MQTT_RECV_COMPLETE) {
+		LOGE("mqtt recv timeout\r\n");
+	} else {
 		report_json = make_image_json();
 		if(mqtt_publish(ONENET_TOPIC_UPDATE, report_json->buff, strlen(report_json->buff)) < 0) {
 			return -1;
@@ -349,7 +360,7 @@ int onenet_publish_device_image(void)
 	return 0;
 }
 
-int save_update_params(void)
+void save_update_params(void)
 {
 	LOGI("%s \r\n", __FUNCTION__);
 	if(need_update_flag & SAMPLE_FREQ_FLAG) {
@@ -361,7 +372,8 @@ int save_update_params(void)
 	if(need_update_flag & FLOW_DEFAULT_FLAG) {
 		nvitem_set_array(Q_DEFAULT_KEY, q_default_value, Q_DEFAULT_NUM);
 	}
-	if(need_update_flag & ANGLE_DEFAULT_FLAG) {
+	if((need_update_flag & ANGLE_DEFAULT1_FLAG) || (need_update_flag & ANGLE_DEFAULT2_FLAG)
+			|| (need_update_flag & ANGLE_DEFAULT3_FLAG) || (need_update_flag & ANGLE_DEFAULT4_FLAG)) {
 		nvitem_set_array(ANGLE_DEFAULT_KEY, angle_default_value, ANGLE_DEFAULT_NUM);
 	}
 }

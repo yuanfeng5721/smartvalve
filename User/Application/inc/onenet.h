@@ -29,14 +29,17 @@ typedef struct {
 }Need_update_Data;
 
 
-#define BIT(b) (1<<b)
+#define BIT16(b) (1<<b)
 
 typedef enum {
-	SAMPLE_FREQ_FLAG = BIT(0),
-	UPDATE_FREQ_FLAG = BIT(1),
-	FLOW_DEFAULT_FLAG = BIT(2),
-	ANGLE_DEFAULT_FLAG = BIT(3),
-	DP_DATA_FLAG = BIT(3),
+	SAMPLE_FREQ_FLAG = BIT16(0),
+	UPDATE_FREQ_FLAG = BIT16(1),
+	FLOW_DEFAULT_FLAG = BIT16(2),
+	ANGLE_DEFAULT1_FLAG = BIT16(3),
+	ANGLE_DEFAULT2_FLAG = BIT16(4),
+	ANGLE_DEFAULT3_FLAG = BIT16(5),
+	ANGLE_DEFAULT4_FLAG = BIT16(6),
+	DP_DATA_FLAG = BIT16(7),
 }Need_Update_Flag;
 
 void init_onenet_account(void);
