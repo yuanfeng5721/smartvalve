@@ -512,6 +512,11 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void MX_USART1_UART_DeInit(void)
+{
+	HAL_UART_DeInit(&huart1);
+}
+
 __weak void HAL_UART4_IrqCallback(UART_HandleTypeDef *huart)
 {
   /* Prevent unused argument(s) compilation warning */

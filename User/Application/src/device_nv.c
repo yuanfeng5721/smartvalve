@@ -115,6 +115,7 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 char* print_software_version(void)
 {
 	char ver_buff[64] = {0};
+
 	LOG_RAW("\r\nHardware Version: %s\r\n", HW_VERSION);
 //#ifdef DEBUG
 	sprintf(ver_buff, "%d-%02d-%02d_%s_%s", YEAR, MONTH + 1, DAY, __TIME__, SW_VERSION);

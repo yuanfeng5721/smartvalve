@@ -125,12 +125,14 @@ int HAL_AT_Uart_Init(void)
 {
     //AT_Uart_Init();
 	//at_uart_init(at_client_uart_rx_isr_cb);
+	MX_USART1_UART_Init();
     return QCLOUD_RET_SUCCESS;
 }
 
 int HAL_AT_Uart_Deinit(void)
 {
 	//at_uart_deinit();
+	MX_USART1_UART_DeInit();
     return QCLOUD_RET_SUCCESS;
 }
 #endif
