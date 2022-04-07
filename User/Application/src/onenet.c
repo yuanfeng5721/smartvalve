@@ -351,6 +351,7 @@ int onenet_publish_device_image(void)
 //	if(recv_flag)
 	if(os_event_wait(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE, osFlagsWaitAll, S_TO_TICKS(10)) != IO_EVT_TYPE_MQTT_RECV_COMPLETE) {
 		LOGE("mqtt recv timeout\r\n");
+		os_event_clear(g_event_handle, IO_EVT_TYPE_MQTT_RECV_COMPLETE);
 	} else {
 		report_json = make_image_json();
 		if(mqtt_publish(ONENET_TOPIC_UPDATE, report_json->buff, strlen(report_json->buff)) < 0) {
@@ -380,31 +381,40 @@ void save_update_params(void)
 
 void onenet_process(void)
 {
-	if(!modem_init()) {
-		//send data to mqtt server
-		if(!mqtt_connect(clientid, username, passwd)) {
-			//pub dp
-			onenet_publish_dp();
+	int retry = 2;
 
-			//pub last dp to device images
-			onenet_publish_last_dp();
+	while(retry--) {
+		if(!modem_init()) {
 
-			//sub topic
-			onenet_subscribe_topic();
+			//sync net time
+			modem_ntp(NULL);
 
-			//get delta
-			onenet_trigger_delta();
+			//send data to mqtt server
+			if(!mqtt_connect(clientid, username, passwd)) {
+				//pub dp
+				onenet_publish_dp();
 
-			//update need propertys
-			onenet_publish_device_image();
+				//pub last dp to device images
+				onenet_publish_last_dp();
 
-			//disconnect mqtt server
-			mqtt_disconnect();
+				//sub topic
+				onenet_subscribe_topic();
+
+				//get delta
+				onenet_trigger_delta();
+
+				//update need propertys
+				onenet_publish_device_image();
+
+				//disconnect mqtt server
+				mqtt_disconnect();
+
+				retry = 0;
+			}
 		}
+		//close modem
+		modem_deinit();
 	}
-	//close modem
-	modem_deinit();
-
 	//save need update param
 	save_update_params();
 }

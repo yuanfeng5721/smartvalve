@@ -21,7 +21,7 @@
 
 time_t make_local_time(char *time);
 time_t make_data_time(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t min, uint16_t sec, uint16_t timezone);
-void set_local_time(time_t time);
+void set_local_time(time_t t);
 int calc_wakeup_time(time_t *t, uint16_t interval_s);
 int calc_wakeup_count(uint16_t interval_s);
 

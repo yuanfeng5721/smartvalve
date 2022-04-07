@@ -68,6 +68,7 @@ time_t make_local_time(char *time)
 time_t make_data_time(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t min, uint16_t sec, uint16_t timezone)
 {
 	struct tm ts = {0};
+	time_t t;
 	//char buf[22];
 
 	ts.tm_hour = hour;
@@ -80,12 +81,23 @@ time_t make_data_time(uint16_t year, uint16_t month, uint16_t day, uint16_t hour
 
 	//strftime(buf, 20, "%Y-%m-%d %H:%M:%S", &ts);
 	//LOGD("%s:time: %s!!!!\r\n", __FUNCTION__, buf);
+	//t = mktime(&ts);
+	//LOGD("%s:make time: %lu!!!!\r\n", __FUNCTION__, t);
+	//return t;
 	return mktime(&ts);
 }
 
-void set_local_time(time_t time)
+void set_local_time(time_t t)
 {
-	MX_RTC_Set_Time(time);
+	time_t t1;
+	t1 = time(NULL);
+
+	LOGD("local time = %lu \r\n", t1);
+	LOGD("net time = %lu \r\n", t);
+	LOGD("diff time = %lu \r\n", abs(t-t1));
+	if(abs(t-t1) > 2) {
+		MX_RTC_Set_Time(t);
+	}
 }
 
 int calc_wakeup_count(uint16_t interval_s)

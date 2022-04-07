@@ -38,7 +38,7 @@ uint32_t angle_default_value[ANGLE_DEFAULT_NUM] =
 UpdateFreq update_freq = 20;
 SampleFreq sample_freq = 5;
 
-const static uint32_t  NVVERSION	= 1;  //default nv version, if need update default nv, please  NV_VERSION + 1
+const static uint32_t  NVVERSION	= 2;  //default nv version, if need update default nv, please  NV_VERSION + 1
 //const static uint8_t  update_freq = 20;
 //const static uint32_t wakeup_count = 0;
 //const static uint8_t  F_value = 1;

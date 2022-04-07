@@ -1169,6 +1169,7 @@ static int ml302_ntp(time_t *t)
 		volatile int year, month, day, hour, min, sec;
 		char str_timezone[5] = {0};
 		volatile int timezone = 0;
+		time_t t = 0;
 
 		for (i = 0; i < CCLK_RETRY; i++)
 		{
@@ -1186,8 +1187,9 @@ static int ml302_ntp(time_t *t)
 				continue;
 			}
 			timezone = atoi(str_timezone)/4;
-			Log_d("time: %d-%d-%d %d:%d:%d %d\r\n", year, month, day, hour, min, sec, timezone);
-			set_local_time(make_data_time(year, month, day, hour, min, sec, timezone));
+			t = make_data_time(year, month, day, hour, min, sec, timezone);
+			Log_d("time: %02d-%02d-%02d %02d:%02d:%02d %02d, t: %lu\r\n", year, month, day, hour, min, sec, timezone, t);
+			set_local_time(t);
 			break;
 		}
 
@@ -1561,14 +1563,14 @@ static bool mqtt_connect(at_response_t resp, const char *clientid, const char *u
 	at_exec_cmd(resp, "AT+MMQTTCON=%d,\"%s\",%d,\"%s\",\"%s\",\"%s\"",
 		MQTT_CONN, MQTT_HOST, MQTT_PORT, clientid, username, token);
 
-	return cavan_wait_conn_complete(AT_RESP_TIMEOUT_MS);
+	return cavan_wait_conn_complete(AT_RESP_TIMEOUT_MS*2);
 }
 
 static int ml302_mqtt_connect(const char *clientid, const char *username, const char *passwd)
 {
 	at_response_t resp = NULL;
 	int           ret;
-	uint8_t 	  times = 3;
+	uint8_t 	  times = 2;
 
 	resp = at_create_resp(160, 0, AT_RESP_TIMEOUT_MS);
 	if (NULL == resp) {
@@ -1598,6 +1600,13 @@ static int ml302_mqtt_connect(const char *clientid, const char *username, const 
 		}
 
 		if (times < 1) {
+			ret = QCLOUD_ERR_MQTT_NO_CONN;
+			goto exit;
+		}
+
+		if(at_obj_wait_connect(ML302_WAIT_CONNECT_TIME/2))
+		{
+			Log_e("at sync error!");
 			ret = QCLOUD_ERR_MQTT_NO_CONN;
 			goto exit;
 		}

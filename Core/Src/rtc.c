@@ -140,7 +140,7 @@ void MX_RTC_Set_Time(time_t time)
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
 
-	LOGD("%s: %ld \r\n", __FUNCTION__, time);
+	LOGD("%s: %lu \r\n", __FUNCTION__, time);
 	ts = localtime(&time);
 
 	strftime(buf, 20, "%Y-%m-%d %H:%M:%S", ts);

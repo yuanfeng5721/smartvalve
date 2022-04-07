@@ -229,14 +229,14 @@ void record_sensor_data(time_t t, uint16_t record_item)
 	dp_data[i].dt[record_item].v = Q;
 	dp_data[i].dt[record_item].t = time;
 	dp_data[i].dt[record_item].isOk = true;
-	dp[i].dt.v = sensor_data[i];
+	dp[i].dt.v = Q;
 	dp[i].dt.t = time;
 	dp[i].dt.isOk = true;
 	i++;
 	dp_data[i].dt[record_item].v = at_device_get_rssi();
 	dp_data[i].dt[record_item].t = time;
 	dp_data[i].dt[record_item].isOk = true;
-	dp[i].dt.v = sensor_data[i];
+	dp[i].dt.v = at_device_get_rssi();
 	dp[i].dt.t = time;
 	dp[i].dt.isOk = true;
 }
@@ -350,15 +350,19 @@ void DataProcessTask(void const * argument)
 		modem_deinit();
 
 		while (1) {
+			uint32_t event_type;
 			next_time = SleepAndWakeUp(MIN_TO_SECONDS(sample_freq));
 			osDelay(300);
 			sample_count = calc_wakeup_count(MIN_TO_SECONDS(sample_freq));
 			//send sensor sample message
 			os_msg_send(sensorsQueueHandle, &p_msg, 0);
 			//wait sample task complete
-			if(os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60)) != IO_EVT_TYPE_SENSORS_COMPLETE)
+			event_type = os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60));
+			LOGI("wait event type = 0x%x \r\n", event_type);
+			if(event_type != IO_EVT_TYPE_SENSORS_COMPLETE)
 			{
 				LOGE("some task exec error\r\n");
+				os_event_clear(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
 			}
 			else
 			{

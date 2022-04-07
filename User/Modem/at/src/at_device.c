@@ -85,6 +85,7 @@ int modem_init(void)
 	}
     return rc;
 }
+
 int modem_deinit(void)
 {
 //	if(!device_has_initialled) {
