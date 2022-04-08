@@ -35,7 +35,7 @@ extern "C" {
 extern IWDG_HandleTypeDef hiwdg;
 
 /* USER CODE BEGIN Private defines */
-#define FEED_DOG_INTERVAL    20
+#define FEED_DOG_INTERVAL    20  //20S
 /* USER CODE END Private defines */
 
 void MX_IWDG_Init(void);

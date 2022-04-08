@@ -10,6 +10,7 @@
 #include "rtc.h"
 #include "time.h"
 #include "log.h"
+#include "iwdg.h"
 
 time_t time (time_t *_time)
 {
@@ -188,20 +189,32 @@ void enter_stop_mode(void)
 }
 time_t SleepAndWakeUp(uint32_t interval_s)
 {
-	uint16_t feeddog_count = 0;
+	uint16_t feeddog_count = 0, i;
 	uint32_t remain_sleep_time = 0;
 	uint32_t sleeptime;
 	time_t next_time;
+
 	sleeptime = calc_wakeup_time(&next_time, interval_s);
-	LOGD("into sleep!!!!!!\r\n");
 
-//	feeddog_count = sleeptime/FEED_DOG_INTERVAL;
-//	remain_sleep_time = sleeptime%FEED_DOG_INTERVAL;
+	feeddog_count = sleeptime/FEED_DOG_INTERVAL;
+	remain_sleep_time = sleeptime%FEED_DOG_INTERVAL;
 
-	MX_RTC_Wakeup_Start(sleeptime);
-	enter_stop_mode();
-	MX_RTC_Wakeup_Stop();
+	LOGD("into sleep(count:%d, remain time:%d)!!!!!!\r\n", feeddog_count, remain_sleep_time);
+	HAL_IWDG_Refresh(&hiwdg);
+	for(i=0; i<feeddog_count; i++) {
+		MX_RTC_Wakeup_Start(FEED_DOG_INTERVAL);
+		enter_stop_mode();
+		MX_RTC_Wakeup_Stop();
+		HAL_IWDG_Refresh(&hiwdg);
+	}
+	if(remain_sleep_time > 0) {
+		MX_RTC_Wakeup_Start(remain_sleep_time);
+		enter_stop_mode();
+		MX_RTC_Wakeup_Stop();
+		HAL_IWDG_Refresh(&hiwdg);
+	}
 	SystemClock_Config();
-	LOGD("wakeup!!!!!!\r\n");
+	osDelay(300);
+	LOGD("wakeup(%d)!!!!!!\r\n", i);
 	return next_time;
 }
