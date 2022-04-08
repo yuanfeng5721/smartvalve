@@ -12,4 +12,7 @@
 void SensorsTaskInit(void);
 extern osMessageQId sensorsQueueHandle;
 
+bool SensorsConvertStateGet(void);
+void SensorsConvertStateClr(void);
+
 #endif /* APPLICATION_INC_SENSORS_TASK_H_ */

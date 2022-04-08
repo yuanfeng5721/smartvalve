@@ -18,10 +18,11 @@
 osThreadId sensorsTaskHandle;
 osMessageQId sensorsQueueHandle;
 
+static bool bSensorsConvertComplete = false;
 
 void StartSensorsTask(void const * argument)
 {
-	osMsgStatus status;
+	//osMsgStatus status;
 	sensors_sample_t *sensors_data = NULL;
 	io_msg_t p_msg;
 	//Sensors_Power(true);
@@ -33,6 +34,7 @@ void StartSensorsTask(void const * argument)
 				sensors_data = Sensors_Sample_Data();
 				Sensors_Power(false);
 				os_event_set(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
+				bSensorsConvertComplete = true;
 			}
 		}
 		osDelay(1000);
@@ -50,4 +52,14 @@ void SensorsTaskInit(void)
 osMessageQId SensorsGetMessageHandle(void)
 {
 	return sensorsQueueHandle;
+}
+
+bool SensorsConvertStateGet(void)
+{
+	return bSensorsConvertComplete;
+}
+
+void SensorsConvertStateClr(void)
+{
+	bSensorsConvertComplete = false;
 }

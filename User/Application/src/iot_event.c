@@ -40,7 +40,7 @@ uint32_t os_event_wait(osEventFlagsId_t ef_id, uint32_t flags, uint32_t options,
 
 osEvtStatus os_event_delete(osEventFlagsId_t ef_id)
 {
-	osEventFlagsDelete (ef_id);
+	return osEventFlagsDelete (ef_id);
 }
 
 int globle_event_init(void)

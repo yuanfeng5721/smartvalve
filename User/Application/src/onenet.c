@@ -187,9 +187,9 @@ static cavan_json_t *make_image_dp_json(void)
 
 	for(i=0; i<DP_MAX_NUMBER-1; i++)
 	{
-		if(need_dot++){
-			cavan_json_append(json, ',');
-		}
+//		if(need_dot++){
+//			cavan_json_append(json, ',');
+//		}
 		cavan_mqtt_append_float2(json, dp[i].name, dp[i].dt.v);
 		dp[i].dt.v = 0;
 		dp[i].dt.isOk = false;

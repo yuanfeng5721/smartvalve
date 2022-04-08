@@ -351,8 +351,10 @@ void DataProcessTask(void const * argument)
 
 		while (1) {
 			uint32_t event_type;
+			bool bEnterNextProcess = false;
+
 			next_time = SleepAndWakeUp(MIN_TO_SECONDS(sample_freq));
-			osDelay(300);
+
 			sample_count = calc_wakeup_count(MIN_TO_SECONDS(sample_freq));
 			//send sensor sample message
 			os_msg_send(sensorsQueueHandle, &p_msg, 0);
@@ -363,8 +365,18 @@ void DataProcessTask(void const * argument)
 			{
 				LOGE("some task exec error\r\n");
 				os_event_clear(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
+				LOGE("need double check sensors task state!!! \r\n");
+				if(SensorsConvertStateGet()) {
+					SensorsConvertStateClr();
+					bEnterNextProcess = true;
+				} else {
+					bEnterNextProcess = false;
+				}
+			} else {
+				bEnterNextProcess = true;
 			}
-			else
+
+			if(bEnterNextProcess)
 			{
 				//record sensor data
 				record_sensor_data(next_time, RECORD_SENSOR_ITEM(sample_count, sample_freq));
@@ -385,7 +397,7 @@ void DataProcessTaskInit(void)
 {
 	os_msg_create(&dataProcessQueueHandle, 4, sizeof(io_msg_t));
 
-	osThreadDef(dataProcessTask, DataProcessTask, DATA_PROCESS_TASK_PRIORITY, 0, 512);
+	osThreadDef(dataProcessTask, DataProcessTask, DATA_PROCESS_TASK_PRIORITY, 0, 0x300);
 	dataProcessTaskHandle = osThreadCreate(osThread(dataProcessTask), NULL);
 }
 
