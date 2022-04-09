@@ -1028,11 +1028,11 @@ static int ml302_init(void)
         ret = QCLOUD_ERR_FAILURE;
         goto __exit;
     }
-	
-    ml302_power(true);
 
 	while(retry_num--) {
 		/* power-up ml302 */
+		ml302_power(true);
+
 		memset(g_IMEI, 0, IMEI_MAX_LEN);
 		/* wait ML302 startup finish, Send AT every 5s, if receive OK, SYNC success*/
 		if(at_obj_wait_connect(ML302_WAIT_CONNECT_TIME))
@@ -1134,9 +1134,10 @@ static int ml302_init(void)
         if (ret != QCLOUD_RET_SUCCESS)
         {
             /* reset the ml302 device */
-        	ml302_reset();
+        	//ml302_reset();
             // at_delayms(1000);
-
+        	ml302_power(false);
+        	at_delayms(10000);
             Log_i("%s device initialize retry...", DEVICE_NAME);
         }
 	}
