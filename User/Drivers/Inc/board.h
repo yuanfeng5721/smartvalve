@@ -13,7 +13,8 @@ void modem_pwr_key(bool press, uint16_t ms);
 void modem_reset(void);
 void sensors_power(bool onoff);
 void ble_reset_pin(bool onoff);
-void ble_wakeup_pin(bool onoff);
+void ble_wakeup_mcu_init(void);
+void mcu_wakeup_ble_pin(bool onoff);
 
 /****************************************************
  *  platform tools

@@ -111,10 +111,10 @@ const nvitem default_env_set[DEFAULT_NV_ITEMS] = {
 #endif
 };
 
-
+char ver_buff[128] = {0};
 char* print_software_version(void)
 {
-	char ver_buff[64] = {0};
+	//char ver_buff[64] = {0};
 
 	LOG_RAW("\r\nHardware Version: %s\r\n", HW_VERSION);
 //#ifdef DEBUG

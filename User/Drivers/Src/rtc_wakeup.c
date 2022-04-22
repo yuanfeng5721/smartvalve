@@ -11,6 +11,7 @@
 #include "time.h"
 #include "log.h"
 #include "iwdg.h"
+#include "ble.h"
 
 time_t time (time_t *_time)
 {
@@ -196,22 +197,30 @@ time_t SleepAndWakeUp(uint32_t interval_s)
 
 	sleeptime = calc_wakeup_time(&next_time, interval_s);
 
-	feeddog_count = sleeptime/FEED_DOG_INTERVAL;
-	remain_sleep_time = sleeptime%FEED_DOG_INTERVAL;
-
+	feeddog_count = (sleeptime-1)/FEED_DOG_INTERVAL;
+	remain_sleep_time = (sleeptime-1)%FEED_DOG_INTERVAL;
+	remain_sleep_time += 1;
 	LOGD("into sleep(count:%d, remain time:%d)!!!!!!\r\n", feeddog_count, remain_sleep_time);
 	HAL_IWDG_Refresh(&hiwdg);
-	for(i=0; i<feeddog_count; i++) {
-		MX_RTC_Wakeup_Start(FEED_DOG_INTERVAL);
+	for(i=0; i<feeddog_count+1; i++) {
+		MX_RTC_Wakeup_Start((i<feeddog_count)?FEED_DOG_INTERVAL:remain_sleep_time);
 		enter_stop_mode();
 		MX_RTC_Wakeup_Stop();
 		HAL_IWDG_Refresh(&hiwdg);
-	}
-	if(remain_sleep_time > 0) {
-		MX_RTC_Wakeup_Start(remain_sleep_time);
-		enter_stop_mode();
-		MX_RTC_Wakeup_Stop();
-		HAL_IWDG_Refresh(&hiwdg);
+		if(ble_check_connect())
+		{
+			SystemClock_Config();
+			osDelay(300);
+			LOGD("BLE Wakeup!!!!!!!\r\n");
+			return 0;
+//			while(ble_check_connect())
+//			{
+//				osDelay(100);
+//			}
+//			osDelay(300);
+//			ble_set_powerlevel(1);
+//			LOGD("continue into sleep(count:%d, remain time:%d)!!!!!!\r\n", feeddog_count-i, remain_sleep_time);
+		}
 	}
 	SystemClock_Config();
 	osDelay(300);

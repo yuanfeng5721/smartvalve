@@ -105,7 +105,7 @@ int main(void)
   //MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_UART4_Init();
-  MX_USART2_UART_Init();
+  //MX_USART2_UART_Init();
   MX_ADC_Init();
   MX_I2C1_Init();
   MX_RTC_Init();

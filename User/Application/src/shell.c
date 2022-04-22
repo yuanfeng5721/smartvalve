@@ -19,12 +19,13 @@
 #include "utils_timer.h"
 #include "utils_ringbuff.h"
 #include "moto.h"
+#include "ble.h"
 
 #define SHELL_UART_RECV_IRQ
 #define SHELL_RING_BUFF_SIZE   512
 //#define SHELL_PRINT_BUFF_SIZE  256
 #define Shell_IRQHandler HAL_UART5_IrqCallback
-#define shell_print(format, args...) printf(format, ##args)
+#define shell_print(format, args...) 	ble_check_connect()?ble_print(format, ##args):printf(format, ##args)
 
 //static uint8_t print_buff[SHELL_PRINT_BUFF_SIZE] = {0};
 static bool g_connected = false;
@@ -66,7 +67,7 @@ bool set_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len );
 bool get_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len );
 bool erase_nv_cmd(char *args[], uint8_t argc, uint16_t len );
 
-static const cli_cmd g_cmd[]=
+const cli_cmd g_cmd[22]=
 {
 	{"set_mode",1,"set device mode", set_mode_cmd, NULL},
 	{"nv_wr",2,"write nv item", nv_write_cmd, NULL},
@@ -240,7 +241,7 @@ bool set_valve_angle_cmd(char *args[], uint8_t argc, uint16_t len)
 
 bool get_version_cmd(char *args[], uint8_t argc, uint16_t len)
 {
-	print_software_version();
+	shell_print("Software Version: %s\r\n",print_software_version());
 	return true;
 }
 
@@ -288,7 +289,9 @@ bool set_f_cmd(char *args[], uint8_t argc, uint16_t len )
 	shell_print("%s: value=%s\r\n",__FUNCTION__, value);
 
 	if(value == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		set_F(atoi(value));
@@ -366,7 +369,9 @@ bool set_z_cmd(char *args[], uint8_t argc, uint16_t len )
 	shell_print("\r\nstart seting zeta ....\r\n");
 
 	if(value == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		i = 0;
@@ -424,7 +429,9 @@ bool set_q_d_cmd(char *args[], uint8_t argc, uint16_t len)
 	shell_print("\r\nstart seting Q ....\r\n");
 
 	if(value == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		i = 0;
@@ -470,7 +477,9 @@ bool set_angle_cmd(char *args[], uint8_t argc, uint16_t len )
 	shell_print("\r\nstart setting opening value ....\r\n");
 
 	if(value == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		i = 0;
@@ -513,7 +522,9 @@ bool encoder_test_cmd(char *args[], uint8_t argc, uint16_t len)
 	shell_print("%s: freq=%s, number=%s, dir=%s\r\n",__FUNCTION__, args[0],args[1],args[2]);
 
 	if(args[0] == NULL || args[1] == NULL || args[2] == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		freq = atoi(args[0]);
@@ -537,7 +548,9 @@ bool set_moto_timer_freq_cmd(char *args[], uint8_t argc, uint16_t len )
 	shell_print("%s: value=%s\r\n",__FUNCTION__, value);
 
 	if(value == NULL)
+	{
 		shell_print("\r\nfaile\r\n");
+	}
 	else
 	{
 		m_freq = atoi(value);
@@ -646,7 +659,7 @@ void Shell_IRQHandler(UART_HandleTypeDef *huart)
 //	return buff - buff_bak;
 //}
 
-bool get_char(UART_HandleTypeDef *huart, char *buff, uint32_t timeout)
+static bool get_char(UART_HandleTypeDef *huart, char *buff, uint32_t timeout)
 {
 	Timer timer;
 
@@ -674,7 +687,7 @@ bool get_char(UART_HandleTypeDef *huart, char *buff, uint32_t timeout)
 	return true;
 }
 
-uint16_t get_line(UART_HandleTypeDef *huart, char *cmdbuf, size_t size, uint32_t timeout)
+static uint16_t get_line(UART_HandleTypeDef *huart, char *cmdbuf, size_t size, uint32_t timeout)
 {
     int  read_len = 0;
     char ch = 0, last_ch = 0;
@@ -734,6 +747,42 @@ bool StrComp(void * buffer,void * StrCmd)
     }
     return false;
 }
+
+void cli_cmd_process(char cmd, uint16_t len, BootMode bootmode)
+{
+	uint16_t j = 0, param_len = 0;
+	char *param = NULL, *argv[5]={NULL};
+	char delims[] = " ";
+	char *str = NULL;
+
+	for(uint8_t i=0; i<sizeof(g_cmd)/sizeof(cli_cmd); i++)
+	{
+		j = 0;
+		if(StrComp(cmd,(void *)g_cmd[i].pCmdStr) == true)
+		{
+			param = cmd+strlen(g_cmd[i].pCmdStr)+1;
+			param_len = len-strlen(g_cmd[i].pCmdStr)-1;
+			if(g_cmd[i].uExpParam > 0)
+			{
+				str = strtok(param, delims);
+				while(str!=NULL)
+				{
+					argv[j] = str;
+					LOGD( "arg[%d] : %s\r\n", j, argv[j]);
+					j++;
+					str = strtok( NULL, delims );
+				}
+			}
+
+			if(((bootmode != CONFIG_MODE) && (i == 0)) || (bootmode == CONFIG_MODE)) {
+				g_cmd[i].pxCmdHook(argv, g_cmd[i].uExpParam, param_len);
+			}
+			//send_result(g_cmd[i].pResult);
+			return;
+		}
+	}
+}
+
 void cli_cmd_service(void)
 {
 	char cmd[300] = {0}, *param = NULL, *argv[5]={NULL};
@@ -786,6 +835,7 @@ void cli_cmd_service(void)
 					break;
 				}
 			}
+			//cli_cmd_process(cmd, len, bootmode);
 		}
 		osDelay(200);
 	}while(true);

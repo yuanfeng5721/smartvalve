@@ -79,11 +79,22 @@ void ble_reset_pin(bool onoff)
 	GPIO_WRITE(bt_rst_GPIO_Port, bt_rst_Pin, (GPIO_PinState) onoff);
 }
 
-/** @brief  ble wakeup control
+/** @brief  ble wakeup mcu init
+  * @param  None
+  * @retval None
+  */
+void ble_wakeup_mcu_init(void)
+{
+	/* EXTI interrupt init*/
+	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+}
+
+/** @brief  mcu wakeup ble control
   * @param  onoff 1: wakeup pin high; 0: wakeup pin low
   * @retval None
   */
-void ble_wakeup_pin(bool onoff)
+void mcu_wakeup_ble_pin(bool onoff)
 {
 	LOGD("ble_wakeup_pin: %d \r\n", onoff);
 	GPIO_WRITE(mcu_wakeup_bt_GPIO_Port, mcu_wakeup_bt_Pin, (GPIO_PinState) onoff);

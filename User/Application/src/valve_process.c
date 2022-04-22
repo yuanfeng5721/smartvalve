@@ -20,6 +20,7 @@
 #include "device_nv.h"
 #include "rtc_wakeup.h"
 #include "moto.h"
+#include "ble.h"
 
 #define DATA_PROCESS_TASK_PRIORITY      (osPriorityNormal+1)
 #define IS_UPDATE_SENSOR_DATA(sample_count, sample_freq, update_freq) (((sample_count+1)%(update_freq/sample_freq)) == 0)
@@ -353,39 +354,46 @@ void DataProcessTask(void const * argument)
 			uint32_t event_type;
 			bool bEnterNextProcess = false;
 
-			next_time = SleepAndWakeUp(MIN_TO_SECONDS(sample_freq));
-
-			sample_count = calc_wakeup_count(MIN_TO_SECONDS(sample_freq));
-			//send sensor sample message
-			os_msg_send(sensorsQueueHandle, &p_msg, 0);
-			//wait sample task complete
-			event_type = os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60));
-			LOGI("wait event type = 0x%x \r\n", event_type);
-			if(event_type != IO_EVT_TYPE_SENSORS_COMPLETE)
+			if(ble_check_connect())
 			{
-				LOGE("some task exec error\r\n");
-				os_event_clear(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
-				LOGE("need double check sensors task state!!! \r\n");
-				if(SensorsConvertStateGet()) {
-					SensorsConvertStateClr();
-					bEnterNextProcess = true;
-				} else {
-					bEnterNextProcess = false;
-				}
-			} else {
-				bEnterNextProcess = true;
+				osDelay(100);
+				continue;
 			}
-
-			if(bEnterNextProcess)
+			next_time = SleepAndWakeUp(MIN_TO_SECONDS(sample_freq));
+			if(next_time != 0)
 			{
-				//record sensor data
-				record_sensor_data(next_time, RECORD_SENSOR_ITEM(sample_count, sample_freq));
-				//valve control
-				valve_control(sample_count, sample_freq);
-				//check whether update sensor data
-				if(IS_UPDATE_SENSOR_DATA(sample_count, sample_freq, update_freq)) {
-					LOGI("sensor sample ok, next task run\r\n");
-					onenet_process();
+				sample_count = calc_wakeup_count(MIN_TO_SECONDS(sample_freq));
+				//send sensor sample message
+				os_msg_send(sensorsQueueHandle, &p_msg, 0);
+				//wait sample task complete
+				event_type = os_event_wait(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE, osFlagsWaitAll, S_TO_TICKS(5*60));
+				LOGI("wait event type = 0x%x \r\n", event_type);
+				if(event_type != IO_EVT_TYPE_SENSORS_COMPLETE)
+				{
+					LOGE("some task exec error\r\n");
+					os_event_clear(g_event_handle, IO_EVT_TYPE_SENSORS_COMPLETE);
+					LOGE("need double check sensors task state!!! \r\n");
+					if(SensorsConvertStateGet()) {
+						SensorsConvertStateClr();
+						bEnterNextProcess = true;
+					} else {
+						bEnterNextProcess = false;
+					}
+				} else {
+					bEnterNextProcess = true;
+				}
+
+				if(bEnterNextProcess)
+				{
+					//record sensor data
+					record_sensor_data(next_time, RECORD_SENSOR_ITEM(sample_count, sample_freq));
+					//valve control
+					valve_control(sample_count, sample_freq);
+					//check whether update sensor data
+					if(IS_UPDATE_SENSOR_DATA(sample_count, sample_freq, update_freq)) {
+						LOGI("sensor sample ok, next task run\r\n");
+						onenet_process();
+					}
 				}
 			}
 			osDelay(100);

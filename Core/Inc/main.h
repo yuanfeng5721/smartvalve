@@ -87,6 +87,7 @@ void _Error_Handler(uint8_t *file, uint32_t line);
 #define sensor_pwr_en1_GPIO_Port GPIOB
 #define bt_mode_Pin GPIO_PIN_15
 #define bt_mode_GPIO_Port GPIOB
+#define bt_mode_EXTI_IRQn EXTI15_10_IRQn
 #define bt_rst_Pin GPIO_PIN_8
 #define bt_rst_GPIO_Port GPIOA
 #define uart4_rts_Pin GPIO_PIN_15

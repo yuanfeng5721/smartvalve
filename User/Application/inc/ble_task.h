@@ -8,7 +8,6 @@
 #ifndef APPLICATION_INC_BLE_TASK_H_
 #define APPLICATION_INC_BLE_TASK_H_
 
-
 void BleTaskInit(void);
 
 #endif /* APPLICATION_INC_BLE_TASK_H_ */
